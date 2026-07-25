@@ -1,0 +1,21 @@
+FROM node:20-slim
+
+# Install git (needed to read PR diffs / clone repo history)
+RUN apt-get update && apt-get install -y git curl && rm -rf /var/lib/apt/lists/*
+
+# Install the agent runtime CLI (Claude Code)
+RUN npm install -g @anthropic-ai/claude-code
+
+# Create a non-root user so the agent isn't running as root inside the container
+RUN useradd -m agent
+USER agent
+
+WORKDIR /workspace
+
+# Only copy in what the agent needs to see - not your whole machine
+COPY --chown=agent:agent . /workspace
+
+# Credentials are NOT baked in here - they get passed in at runtime
+# via environment variables (see docker-compose.yml / .env.example)
+
+CMD ["bash"]
