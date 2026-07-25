@@ -1,1 +1,18 @@
-
+services:
+  agent-harness:
+    build: .
+    container_name: pr-review-agent
+    volumes:
+      # Only mount the data and workspace folders - NOT your home directory
+      - ./data:/workspace/data
+      - ./workspace:/workspace/output
+    environment:
+      # Loaded from .env - never commit real secrets
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+    # No open network by default beyond what the base image needs.
+    # If you want to explicitly restrict egress further, that's usually
+    # done at the host/firewall level or with a custom Docker network -
+    # document this as a known boundary in your architecture write-up.
+    network_mode: "bridge"
+    read_only: false   # set true later once you confirm what needs write access
