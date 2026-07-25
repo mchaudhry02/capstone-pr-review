@@ -1,0 +1,135 @@
+diff --git a/src/constructNow/index.ts b/src/constructNow/index.ts
+index 0093beddc5..a248a027b8 100644
+--- a/src/constructNow/index.ts
++++ b/src/constructNow/index.ts
+@@ -1,4 +1,4 @@
+-import { constructFrom } from "../index.js";
++import { constructFrom } from "../constructFrom/index.js";
+ 
+ /**
+  * @name constructNow
+diff --git a/src/formatDistanceToNow/index.ts b/src/formatDistanceToNow/index.ts
+index ef0b74c0de..a73aa6c5b6 100644
+--- a/src/formatDistanceToNow/index.ts
++++ b/src/formatDistanceToNow/index.ts
+@@ -1,6 +1,6 @@
++import { constructNow } from "../constructNow/index.js";
+ import type { FormatDistanceOptions } from "../formatDistance/index.js";
+ import { formatDistance } from "../formatDistance/index.js";
+-import { constructNow } from "../index.js";
+ 
+ /**
+  * The {@link formatDistanceToNow} function options.
+diff --git a/src/formatDistanceToNowStrict/index.ts b/src/formatDistanceToNowStrict/index.ts
+index 287c50ab0a..4199e012b0 100644
+--- a/src/formatDistanceToNowStrict/index.ts
++++ b/src/formatDistanceToNowStrict/index.ts
+@@ -1,6 +1,6 @@
+ import type { FormatDistanceStrictOptions } from "../formatDistanceStrict/index.js";
+ import { formatDistanceStrict } from "../formatDistanceStrict/index.js";
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ 
+ /**
+  * The {@link formatDistanceToNowStrict} function options.
+diff --git a/src/isThisHour/index.ts b/src/isThisHour/index.ts
+index 0558f78a9b..5e5f2dc8be 100644
+--- a/src/isThisHour/index.ts
++++ b/src/isThisHour/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameHour } from "../isSameHour/index.js";
+ 
+ /**
+diff --git a/src/isThisISOWeek/index.ts b/src/isThisISOWeek/index.ts
+index 06cef8f916..b555caf703 100644
+--- a/src/isThisISOWeek/index.ts
++++ b/src/isThisISOWeek/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameISOWeek } from "../isSameISOWeek/index.js";
+ 
+ /**
+diff --git a/src/isThisMinute/index.ts b/src/isThisMinute/index.ts
+index 9ee0483535..604c4b5487 100644
+--- a/src/isThisMinute/index.ts
++++ b/src/isThisMinute/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameMinute } from "../isSameMinute/index.js";
+ 
+ /**
+diff --git a/src/isThisMonth/index.ts b/src/isThisMonth/index.ts
+index c17c40147b..67cd021b41 100644
+--- a/src/isThisMonth/index.ts
++++ b/src/isThisMonth/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameMonth } from "../isSameMonth/index.js";
+ 
+ /**
+diff --git a/src/isThisQuarter/index.ts b/src/isThisQuarter/index.ts
+index c9ad10ac2c..1e8beb94c2 100644
+--- a/src/isThisQuarter/index.ts
++++ b/src/isThisQuarter/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameQuarter } from "../isSameQuarter/index.js";
+ 
+ /**
+diff --git a/src/isThisSecond/index.ts b/src/isThisSecond/index.ts
+index b3e3eaea1c..edf4ad2847 100644
+--- a/src/isThisSecond/index.ts
++++ b/src/isThisSecond/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameSecond } from "../isSameSecond/index.js";
+ 
+ /**
+diff --git a/src/isThisWeek/index.ts b/src/isThisWeek/index.ts
+index 8057f930d3..52a194348f 100644
+--- a/src/isThisWeek/index.ts
++++ b/src/isThisWeek/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameWeek } from "../isSameWeek/index.js";
+ import type { LocalizedOptions, WeekOptions } from "../types.js";
+ 
+diff --git a/src/isThisYear/index.ts b/src/isThisYear/index.ts
+index 2b1f1a3e05..c723a298bf 100644
+--- a/src/isThisYear/index.ts
++++ b/src/isThisYear/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameYear } from "../isSameYear/index.js";
+ 
+ /**
+diff --git a/src/isTomorrow/index.ts b/src/isTomorrow/index.ts
+index dd13cacb95..91927f524a 100644
+--- a/src/isTomorrow/index.ts
++++ b/src/isTomorrow/index.ts
+@@ -1,5 +1,5 @@
+ import { addDays } from "../addDays/index.js";
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameDay } from "../isSameDay/index.js";
+ 
+ /**
+diff --git a/src/isYesterday/index.ts b/src/isYesterday/index.ts
+index 078563194f..38645ff7ad 100644
+--- a/src/isYesterday/index.ts
++++ b/src/isYesterday/index.ts
+@@ -1,4 +1,4 @@
+-import { constructNow } from "../index.js";
++import { constructNow } from "../constructNow/index.js";
+ import { isSameDay } from "../isSameDay/index.js";
+ import { subDays } from "../subDays/index.js";
+ 

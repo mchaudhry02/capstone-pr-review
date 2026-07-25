@@ -1,0 +1,25 @@
+diff --git a/source/vendor/ansi-styles/index.js b/source/vendor/ansi-styles/index.js
+index bd1010c8..eaa7bed6 100644
+--- a/source/vendor/ansi-styles/index.js
++++ b/source/vendor/ansi-styles/index.js
+@@ -65,6 +65,11 @@ const styles = {
+ 	},
+ };
+ 
++export const modifierNames = Object.keys(styles.modifier);
++export const foregroundColorNames = Object.keys(styles.color);
++export const backgroundColorNames = Object.keys(styles.bgColor);
++export const colorNames = [...foregroundColorNames, ...backgroundColorNames];
++
+ function assembleStyles() {
+ 	const codes = new Map();
+ 
+@@ -216,8 +221,3 @@ function assembleStyles() {
+ const ansiStyles = assembleStyles();
+ 
+ export default ansiStyles;
+-
+-export const modifierNames = Object.keys(styles.modifier);
+-export const foregroundColorNames = Object.keys(styles.color);
+-export const backgroundColorNames = Object.keys(styles.bgColor);
+-export const colorNames = [...foregroundColorNames, ...backgroundColorNames];

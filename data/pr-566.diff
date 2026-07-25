@@ -1,0 +1,55 @@
+diff --git a/readme.md b/readme.md
+index 2f41876a..171754ef 100644
+--- a/readme.md
++++ b/readme.md
+@@ -201,6 +201,22 @@ Explicit 256/Truecolor mode can be enabled using the `--color=256` and `--color=
+ 
+ `chalkStderr` contains a separate instance configured with color support detected for `stderr` stream instead of `stdout`. Override rules from `supportsColor` apply to this too. `supportsColorStderr` is exposed for convenience.
+ 
++### modifiers, foregroundColors, backgroundColors, and colors
++
++All supported style strings are exposed as an array of strings for convenience. `colors` is the combination of `foregroundColors` and `backgroundColors`.
++
++This can be useful if you wrap Chalk and need to validate input:
++
++```js
++import {modifiers, foregroundColors} from 'chalk';
++
++console.log(modifiers.includes('bold'));
++//=> true
++
++console.log(foregroundColors.includes('pink'));
++//=> false
++```
++
+ ## Styles
+ 
+ ### Modifiers
+diff --git a/source/index.d.ts b/source/index.d.ts
+index c840202d..b0acc0f5 100644
+--- a/source/index.d.ts
++++ b/source/index.d.ts
+@@ -284,4 +284,9 @@ export {
+ // } from '#supports-color';
+ } from './vendor/supports-color/index.js';
+ 
++export const modifiers: readonly Modifiers[];
++export const foregroundColors: readonly ForegroundColor[];
++export const backgroundColors: readonly BackgroundColor[];
++export const colors: readonly Color[];
++
+ export default chalk;
+diff --git a/source/index.js b/source/index.js
+index 302024b6..340eb10d 100644
+--- a/source/index.js
++++ b/source/index.js
+@@ -209,4 +209,9 @@ export {
+ 	stderrColor as supportsColorStderr,
+ };
+ 
++export const modifiers = Object.keys(ansiStyles.modifier);
++export const foregroundColors = Object.keys(ansiStyles.color);
++export const backgroundColors = Object.keys(ansiStyles.bgColor);
++export const colors = [...foregroundColors, ...backgroundColors];
++
+ export default chalk;

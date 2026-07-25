@@ -1,0 +1,189 @@
+diff --git a/babel.config.js b/babel.config.js
+index f12e39bf37..8c87b197e3 100644
+--- a/babel.config.js
++++ b/babel.config.js
+@@ -1,31 +1,37 @@
+ module.exports = {
+-  presets: ['@babel/preset-typescript'],
++  presets: ["@babel/preset-typescript"],
+ 
+   env: {
+     cjs: {
+       presets: [
+         [
+-          '@babel/preset-env',
+-          { targets: { node: 'current' }, modules: 'commonjs' },
++          "@babel/preset-env",
++          { targets: { node: "current" }, modules: "commonjs" },
+         ],
+       ],
+ 
+       plugins: [
+-        ['@babel/plugin-transform-modules-commonjs', { strict: true }],
+-        ['babel-plugin-add-import-extension', { extension: 'js' }],
++        ["@babel/plugin-transform-modules-commonjs", { strict: true }],
++        ["babel-plugin-add-import-extension", { extension: "js" }],
+       ],
+     },
+ 
+     esm: {
+       presets: [
+-        ['@babel/preset-env', { targets: { node: 'current' }, modules: false }],
++        ["@babel/preset-env", { targets: { node: "current" }, modules: false }],
+       ],
+ 
+-      plugins: [['babel-plugin-add-import-extension', { extension: 'mjs' }]],
++      plugins: [["babel-plugin-add-import-extension", { extension: "mjs" }]],
++    },
++
++    cdn: {
++      presets: [
++        ["@babel/preset-env", { targets: { ie: "11" }, modules: false }],
++      ],
+     },
+   },
+ 
+   ignore: [],
+ 
+   retainLines: true,
+-}
++};
+diff --git a/scripts/build/cdn.ts b/scripts/build/cdn.ts
+new file mode 100755
+index 0000000000..c730369130
+--- /dev/null
++++ b/scripts/build/cdn.ts
+@@ -0,0 +1,106 @@
++/**
++ * The script builds the CDN version of the library.
++ */
++
++import { $ } from "bun";
++import { writeFile } from "fs/promises";
++import { dirname, join, relative } from "path";
++import { listLocales, type LocaleFile } from "../_lib/listLocales";
++import { availableParallelism } from "node:os";
++import { promiseQueue } from "../test/_lib/queue";
++
++if (!process.env.PACKAGE_OUTPUT_PATH)
++  throw new Error("PACKAGE_OUTPUT_PATH is not set");
++
++const out = relative(process.cwd(), process.env.PACKAGE_OUTPUT_PATH);
++
++const indexPath = join(out, "cdn.js");
++const fpIndexPath = join(out, "fp", "cdn.js");
++const localesIndexPath = join(out, "locale", "cdn.js");
++
++Promise.all([
++  listLocales().then((locales) =>
++    Promise.all(
++      locales.map(async (locale) => {
++        const localePath = join(out, "locale", locale.code, "cdn.js");
++        await $`mkdir -p ${dirname(localePath)}`;
++        await writeFile(localePath, localeTemplate(locale));
++        return localePath;
++      }),
++    ),
++  ),
++
++  writeFile(indexPath, indexTemplate()).then(() => indexPath),
++
++  writeFile(fpIndexPath, fpIndexTemplate()).then(() => fpIndexPath),
++
++  writeFile(localesIndexPath, localesIndexTemplate()).then(
++    () => localesIndexPath,
++  ),
++])
++  .then(([localePaths, ...indexPaths]) => localePaths.concat(indexPaths))
++  .then(async (paths) => {
++    const buildOptions = {
++      entrypoints: paths,
++      outdir: ".",
++      sourcemap: "external" as const,
++      root: ".",
++    };
++
++    // First bundle code
++    await Bun.build(buildOptions);
++
++    // Make it compatible with older browser
++    await promiseQueue(
++      paths.map(
++        (path) => () =>
++          $`env BABEL_ENV=cdn npx babel ${path} --out-file ${path} --source-maps`,
++      ),
++      availableParallelism(),
++    );
++
++    // Now generate min versions
++    await Bun.build({
++      ...buildOptions,
++      minify: true,
++      naming: "/[dir]/[name].min.[ext]",
++    });
++  });
++
++function indexTemplate() {
++  return `import * as dateFns from "./index.mjs";
++window.dateFns = {
++  ...window.dateFns,
++  dateFns
++};`;
++}
++
++function fpIndexTemplate() {
++  return `import * as fp from "../fp.mjs";
++window.dateFns = {
++  ...window.dateFns,
++  fp
++};`;
++}
++
++function localesIndexTemplate() {
++  return ` import * as locales from "../locale.mjs";
++window.dateFns = {
++  ...window.dateFns,
++  locale: {
++    ...window.dateFns.locale,
++    ...locales
++  }
++};`;
++}
++
++function localeTemplate({ name, code }: LocaleFile) {
++  return `import { ${name} } from "../${code}.mjs";
++window.dateFns = {
++  ...window.dateFns,
++  locale: {
++    ...window.dateFns.locale,
++    ${name}
++  }
++};`;
++}
+diff --git a/scripts/build/package.sh b/scripts/build/package.sh
+index a0df3400da..e2773d584a 100755
+--- a/scripts/build/package.sh
++++ b/scripts/build/package.sh
+@@ -69,4 +69,9 @@ done
+ if [ -z "$PACKAGE_SKIP_BEAUTIFY" ]; then
+   # Make it prettier
+   npx prettier "$dir" --write --ignore-path "" > /dev/null 2>&1 || exit 1
++fi
++
++if [ -z "$PACKAGE_SKIP_BEAUTIFY" ]; then
++  # Build CDN versions
++  bun ./scripts/build/cdn.ts
+ fi
+\ No newline at end of file
+diff --git a/scripts/test/types.sh b/scripts/test/types.sh
+index 970cf16cc6..2b4fe1b330 100755
+--- a/scripts/test/types.sh
++++ b/scripts/test/types.sh
+@@ -11,6 +11,7 @@ root="$(pwd)/$(dirname "$0")/../.."
+ export PACKAGE_OUTPUT_PATH="$root/tmp/types"
+ 
+ export PACKAGE_SKIP_BEAUTIFY=true
++export PACKAGE_SKIP_CDN=true
+ 
+ ./scripts/build/package.sh
+ 
