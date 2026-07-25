@@ -1,0 +1,113 @@
+diff --git a/.eslintrc.js b/.eslintrc.js
+index 583b38822d..30ac9c7193 100644
+--- a/.eslintrc.js
++++ b/.eslintrc.js
+@@ -29,6 +29,7 @@ module.exports = {
+       { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+     ],
+     "@typescript-eslint/consistent-type-imports": "error",
++    "@typescript-eslint/no-namespace": "off",
+     // The following rules are deprecated: https://eslint.org/blog/2023/10/deprecating-formatting-rules
+     "array-bracket-newline": "off",
+     "array-bracket-spacing": "off",
+diff --git a/src/intlFormat/index.ts b/src/intlFormat/index.ts
+index 930f4de5e5..4c50084a0c 100644
+--- a/src/intlFormat/index.ts
++++ b/src/intlFormat/index.ts
+@@ -1,7 +1,11 @@
+ import { toDate } from "../toDate/index.js";
++import type { DateFns } from "../types.js";
+ 
+ /**
+  * The locale string (see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument).
++ * @deprecated
++ *
++ * [TODO] Remove in v4
+  */
+ export type IntlFormatLocale = Intl.ResolvedDateTimeFormatOptions["locale"];
+ 
+@@ -14,8 +18,10 @@ export type IntlFormatFormatOptions = Intl.DateTimeFormatOptions;
+  * The locale options.
+  */
+ export interface IntlFormatLocaleOptions {
+-  /** The locale(s) to use (see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument) */
+-  locale: IntlFormatLocale | IntlFormatLocale[];
++  /** The locales to use (see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument) */
++  locale: DateFns.Utils.MaybeArray<
++    Intl.ResolvedDateTimeFormatOptions["locale"]
++  >;
+ }
+ 
+ /**
+diff --git a/src/intlFormatDistance/index.ts b/src/intlFormatDistance/index.ts
+index 141a74fe0f..005a735e0c 100644
+--- a/src/intlFormatDistance/index.ts
++++ b/src/intlFormatDistance/index.ts
+@@ -16,21 +16,19 @@ import { differenceInHours } from "../differenceInHours/index.js";
+ import { differenceInMinutes } from "../differenceInMinutes/index.js";
+ import { differenceInSeconds } from "../differenceInSeconds/index.js";
+ import { toDate } from "../toDate/index.js";
++import type { DateFns } from "../types.js";
+ 
+ /**
+  * The {@link intlFormatDistance} function options.
+  */
+-export interface IntlFormatDistanceOptions {
++export interface IntlFormatDistanceOptions
++  extends Intl.RelativeTimeFormatOptions {
+   /** Force the distance unit */
+   unit?: IntlFormatDistanceUnit;
+-  /** The locale(s) to use (see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument) */
+-  locale?: Intl.UnicodeBCP47LocaleIdentifier | Intl.UnicodeBCP47LocaleIdentifier[];
+-  /** The locale matching algorithm to use. Other value: 'lookup'. See MDN for details [Locale identification and negotiation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locale_identification_and_negotiation) */
+-  localeMatcher?: Intl.RelativeTimeFormatLocaleMatcher;
+-  /** The output message format. The values are 'auto' (e.g. `yesterday`), 'always'(e.g. `1 day ago`) */
+-  numeric?: Intl.RelativeTimeFormatNumeric;
+-  /** The length of the result. The values are: 'long' (e.g. `1 month`), 'short' (e.g. 'in 1 mo.'), 'narrow' (e.g. 'in 1 mo.'). The narrow one could be similar to the short one for some locales. */
+-  style?: Intl.RelativeTimeFormatStyle;
++  /** The locales to use (see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl#locales_argument) */
++  locale?: DateFns.Utils.MaybeArray<
++    Intl.ResolvedDateTimeFormatOptions["locale"]
++  >;
+ }
+ 
+ /**
+@@ -219,9 +217,8 @@ export function intlFormatDistance<DateType extends Date>(
+   }
+ 
+   const rtf = new Intl.RelativeTimeFormat(options?.locale, {
+-    localeMatcher: options?.localeMatcher,
+-    numeric: options?.numeric || "auto",
+-    style: options?.style,
++    numeric: "auto",
++    ...options,
+   });
+ 
+   return rtf.format(value, unit);
+diff --git a/src/types.ts b/src/types.ts
+index 3961f83912..9c451be052 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -301,3 +301,22 @@ export interface NearestToUnitOptions<Unit extends number> {
+    * hours. */
+   nearestTo?: Unit;
+ }
++
++/**
++ * Namespace for service-level types that are not oriented to the end users.
++ *
++ * [NOTE] Right now it is empty except the utils, but it will be useful to move
++ * some types here in the future. For instance {@link GenericDateConstructor}
++ * doesn't belong in the root namespace.
++ */
++export namespace DateFns {
++  /**
++   * Type utilities.
++   */
++  export namespace Utils {
++    /**
++     * Resolves passed type or array of types.
++     */
++    export type MaybeArray<Type> = Type | Type[];
++  }
++}

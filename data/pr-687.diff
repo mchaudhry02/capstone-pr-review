@@ -1,0 +1,84 @@
+diff --git a/readme.md b/readme.md
+index 0f732cf8..0dd2c42b 100644
+--- a/readme.md
++++ b/readme.md
+@@ -225,7 +225,7 @@ console.log(foregroundColorNames.includes('pink'));
+ 
+ Chalk supports 256 colors and [Truecolor](https://github.com/termstandard/colors) (16 million colors) on supported terminal apps.
+ 
+-Colors are downsampled from 16 million RGB values to an ANSI color format that is supported by the terminal emulator (or by specifying `{level: n}` as a Chalk option). For example, Chalk configured to run at level 1 (basic color support) will downsample an RGB value of #FF0000 (red) to 91 (ANSI escape for bright red).
++Colors are downsampled from 16 million RGB values to an ANSI color format that is supported by the terminal emulator (or by specifying `{level: n}` as a Chalk option). For example, Chalk configured to run at level 1 (basic color support) will downsample an RGB value of #FF0000 (red) to 91 (ANSI escape for bright red). The same applies to `ansi256` values, so `chalk.ansi256(196)` also becomes 91 at level 1.
+ 
+ Examples:
+ 
+diff --git a/source/index.d.ts b/source/index.d.ts
+index ca8963bf..0b4d35d5 100644
+--- a/source/index.d.ts
++++ b/source/index.d.ts
+@@ -74,6 +74,8 @@ export interface ChalkInstance {
+ 	/**
+ 	Use an [8-bit unsigned number](https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit) to set text color.
+ 
++	The value is downsampled to the 16-color palette on terminals that only support basic colors (level 1), so `chalk.ansi256(196)` becomes 91 (ANSI escape for bright red).
++
+ 	@example
+ 	```
+ 	import chalk from 'chalk';
+@@ -112,6 +114,8 @@ export interface ChalkInstance {
+ 	/**
+ 	Use an [8-bit unsigned number](https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit) to set background color.
+ 
++	The value is downsampled to the 16-color palette on terminals that only support basic colors (level 1), so `chalk.bgAnsi256(196)` becomes 101 (ANSI escape for bright red background).
++
+ 	@example
+ 	```
+ 	import chalk from 'chalk';
+diff --git a/source/index.js b/source/index.js
+index 5e80cb35..a9a5b7cf 100644
+--- a/source/index.js
++++ b/source/index.js
+@@ -88,6 +88,10 @@ const getModelAnsi = (model, level, type, ...arguments_) => {
+ 		return getModelAnsi('rgb', level, type, ...ansiStyles.hexToRgb(...arguments_));
+ 	}
+ 
++	if (model === 'ansi256' && level === 'ansi') {
++		return ansiStyles[type].ansi(ansiStyles.ansi256ToAnsi(...arguments_));
++	}
++
+ 	return ansiStyles[type][model](...arguments_);
+ };
+ 
+diff --git a/test/chalk.js b/test/chalk.js
+index 8d58e459..1ae7a256 100644
+--- a/test/chalk.js
++++ b/test/chalk.js
+@@ -105,9 +105,28 @@ test('properly convert RGB to 256 colors on basic color terminals', t => {
+ 	t.is(new Chalk({level: 3}).bgHex('#FF0000')('hello'), '\u001B[48;2;255;0;0mhello\u001B[49m');
+ });
+ 
+-test('don\'t emit RGB codes if level is 0', t => {
++test('properly convert ANSI 256 to 16 colors on basic color terminals', t => {
++	t.is(new Chalk({level: 1}).ansi256(196)('hello'), '\u001B[91mhello\u001B[39m');
++	t.is(new Chalk({level: 1}).bgAnsi256(196)('hello'), '\u001B[101mhello\u001B[49m');
++	t.is(new Chalk({level: 1}).ansi256(2)('hello'), '\u001B[32mhello\u001B[39m');
++	t.is(new Chalk({level: 1}).bgAnsi256(2)('hello'), '\u001B[42mhello\u001B[49m');
++	t.is(new Chalk({level: 1}).ansi256(8)('hello'), '\u001B[90mhello\u001B[39m');
++	t.is(new Chalk({level: 1}).ansi256(232)('hello'), '\u001B[30mhello\u001B[39m');
++	t.is(new Chalk({level: 1}).ansi256(255)('hello'), '\u001B[37mhello\u001B[39m');
++});
++
++test('keep ANSI 256 colors on 256 color and Truecolor terminals', t => {
++	t.is(new Chalk({level: 2}).ansi256(196)('hello'), '\u001B[38;5;196mhello\u001B[39m');
++	t.is(new Chalk({level: 2}).bgAnsi256(196)('hello'), '\u001B[48;5;196mhello\u001B[49m');
++	t.is(new Chalk({level: 3}).ansi256(196)('hello'), '\u001B[38;5;196mhello\u001B[39m');
++	t.is(new Chalk({level: 3}).bgAnsi256(196)('hello'), '\u001B[48;5;196mhello\u001B[49m');
++});
++
++test('don\'t emit color codes if level is 0', t => {
+ 	t.is(new Chalk({level: 0}).hex('#FF0000')('hello'), 'hello');
+ 	t.is(new Chalk({level: 0}).bgHex('#FF0000')('hello'), 'hello');
++	t.is(new Chalk({level: 0}).ansi256(196)('hello'), 'hello');
++	t.is(new Chalk({level: 0}).bgAnsi256(196)('hello'), 'hello');
+ });
+ 
+ test('supports blackBright color', t => {

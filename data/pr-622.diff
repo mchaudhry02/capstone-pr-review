@@ -1,0 +1,8 @@
+diff --git a/.replit b/.replit
+deleted file mode 100644
+index cf3930d8..00000000
+--- a/.replit
++++ /dev/null
+@@ -1,2 +0,0 @@
+-language = "nodejs"
+-run = "cd examples && node rainbow"

@@ -1,0 +1,556 @@
+diff --git a/readme.md b/readme.md
+index 7f041b5d..ed157bd3 100644
+--- a/readme.md
++++ b/readme.md
+@@ -127,13 +127,6 @@ RAM: ${chalk.green('40%')}
+ DISK: ${chalk.yellow('70%')}
+ `);
+ 
+-// ES2015 tagged template literal
+-log(chalk`
+-CPU: {red ${cpu.totalPercent}%}
+-RAM: {green ${ram.used / ram.total * 100}%}
+-DISK: {rgb(255,131,0) ${disk.used / disk.total * 100}%}
+-`);
+-
+ // Use RGB colors in terminal emulators that support it.
+ log(chalk.rgb(123, 45, 67).underline('Underlined reddish color'));
+ log(chalk.hex('#DEADED').bold('Bold gray!'));
+@@ -257,38 +250,6 @@ Explicit 256/Truecolor mode can be enabled using the `--color=256` and `--color=
+ - `bgCyanBright`
+ - `bgWhiteBright`
+ 
+-## Tagged template literal
+-
+-Chalk can be used as a [tagged template literal](https://exploringjs.com/es6/ch_template-literals.html#_tagged-template-literals).
+-
+-```js
+-import chalk from 'chalk';
+-
+-const miles = 18;
+-const calculateFeet = miles => miles * 5280;
+-
+-console.log(chalk`
+-	There are {bold 5280 feet} in a mile.
+-	In {bold ${miles} miles}, there are {green.bold ${calculateFeet(miles)} feet}.
+-`);
+-```
+-
+-Blocks are delimited by an opening curly brace (`{`), a style, some content, and a closing curly brace (`}`).
+-
+-Template styles are chained exactly like normal Chalk styles. The following three statements are equivalent:
+-
+-```js
+-import chalk from 'chalk';
+-
+-console.log(chalk.bold.rgb(10, 100, 200)('Hello!'));
+-console.log(chalk.bold.rgb(10, 100, 200)`Hello!`);
+-console.log(chalk`{bold.rgb(10,100,200) Hello!}`);
+-```
+-
+-Note that function styles (`rgb()`, `hex()`, etc.) may not contain spaces between parameters.
+-
+-All interpolated values (`` chalk`${foo}` ``) are converted to strings via the `.toString()` method. All curly braces (`{` and `}`) in interpolated value strings are escaped.
+-
+ ## 256 and Truecolor color support
+ 
+ Chalk supports 256 colors and [Truecolor](https://gist.github.com/XVilka/8346728) (16 million colors) on supported terminal apps.
+@@ -331,6 +292,7 @@ The maintainers of chalk and thousands of other packages are working with Tideli
+ 
+ ## Related
+ 
++- [chalk-template](https://github.com/chalk/chalk-template) - [Tagged template literals](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates) support for this module
+ - [chalk-cli](https://github.com/chalk/chalk-cli) - CLI for this module
+ - [ansi-styles](https://github.com/chalk/ansi-styles) - ANSI escape codes for styling strings in the terminal
+ - [supports-color](https://github.com/chalk/supports-color) - Detect whether a terminal supports color
+diff --git a/source/index.d.ts b/source/index.d.ts
+index 73ae767b..a6c6f762 100644
+--- a/source/index.d.ts
++++ b/source/index.d.ts
+@@ -121,36 +121,9 @@ export interface ColorSupport {
+ 	has16m: boolean;
+ }
+ 
+-interface ChalkFunction {
+-	/**
+-	Use a template string.
+-
+-	@remarks Template literals are unsupported for nested calls (see [issue #341](https://github.com/chalk/chalk/issues/341))
+-
+-	@example
+-	```
+-	import chalk from 'chalk';
+-
+-	log(chalk`
+-	CPU: {red ${cpu.totalPercent}%}
+-	RAM: {green ${ram.used / ram.total * 100}%}
+-	DISK: {rgb(255,131,0) ${disk.used / disk.total * 100}%}
+-	`);
+-	```
+-
+-	@example
+-	```
+-	import chalk from 'chalk';
+-
+-	log(chalk.red.bgBlack`2 + 3 = {bold ${2 + 3}}`)
+-	```
+-	*/
+-	(text: TemplateStringsArray, ...placeholders: unknown[]): string;
+-
++export interface ChalkInstance {
+ 	(...text: unknown[]): string;
+-}
+ 
+-export interface ChalkInstance extends ChalkFunction {
+ 	/**
+ 	The color support for Chalk.
+ 
+@@ -358,7 +331,7 @@ Order doesn't matter, and later styles take precedent in case of a conflict.
+ 
+ This simply means that `chalk.red.yellow.green` is equivalent to `chalk.green`.
+ */
+-declare const chalk: ChalkInstance & ChalkFunction;
++declare const chalk: ChalkInstance;
+ 
+ export const supportsColor: ColorSupport | false;
+ 
+diff --git a/source/index.js b/source/index.js
+index 88c7528d..6411672a 100644
+--- a/source/index.js
++++ b/source/index.js
+@@ -4,10 +4,8 @@ import {
+ 	stringReplaceAll,
+ 	stringEncaseCRLFWithFirstIndex,
+ } from './util.js';
+-import template from './templates.js';
+ 
+ const {stdout: stdoutColor, stderr: stderrColor} = supportsColor;
+-const {isArray} = Array;
+ 
+ const GENERATOR = Symbol('GENERATOR');
+ const STYLER = Symbol('STYLER');
+@@ -41,17 +39,12 @@ export class Chalk {
+ }
+ 
+ const chalkFactory = options => {
+-	const chalk = {};
++	const chalk = (...strings) => strings.join(' ');
+ 	applyOptions(chalk, options);
+ 
+-	chalk.template = (...arguments_) => chalkTag(chalk.template, ...arguments_);
+-
+ 	Object.setPrototypeOf(chalk, createChalk.prototype);
+-	Object.setPrototypeOf(chalk.template, chalk);
+-
+-	chalk.template.Chalk = Chalk;
+ 
+-	return chalk.template;
++	return chalk;
+ };
+ 
+ function createChalk(options) {
+@@ -157,16 +150,9 @@ const createStyler = (open, close, parent) => {
+ };
+ 
+ const createBuilder = (self, _styler, _isEmpty) => {
+-	const builder = (...arguments_) => {
+-		if (isArray(arguments_[0]) && isArray(arguments_[0].raw)) {
+-			// Called as a template literal, for example: chalk.red`2 + 3 = {bold ${2+3}}`
+-			return applyStyle(builder, chalkTag(builder, ...arguments_));
+-		}
+-
+-		// Single argument is hot path, implicit coercion is faster than anything
+-		// eslint-disable-next-line no-implicit-coercion
+-		return applyStyle(builder, (arguments_.length === 1) ? ('' + arguments_[0]) : arguments_.join(' '));
+-	};
++	// Single argument is hot path, implicit coercion is faster than anything
++	// eslint-disable-next-line no-implicit-coercion
++	const builder = (...arguments_) => applyStyle(builder, (arguments_.length === 1) ? ('' + arguments_[0]) : arguments_.join(' '));
+ 
+ 	// We alter the prototype because we must return a function, but there is
+ 	// no way to create a function with a different prototype
+@@ -213,28 +199,6 @@ const applyStyle = (self, string) => {
+ 	return openAll + string + closeAll;
+ };
+ 
+-const chalkTag = (chalk, ...strings) => {
+-	const [firstString] = strings;
+-
+-	if (!isArray(firstString) || !isArray(firstString.raw)) {
+-		// If chalk() was called by itself or with a string,
+-		// return the string itself as a string.
+-		return strings.join(' ');
+-	}
+-
+-	const arguments_ = strings.slice(1);
+-	const parts = [firstString.raw[0]];
+-
+-	for (let i = 1; i < firstString.length; i++) {
+-		parts.push(
+-			String(arguments_[i - 1]).replace(/[{}\\]/g, '\\$&'),
+-			String(firstString.raw[i]),
+-		);
+-	}
+-
+-	return template(chalk, parts.join(''));
+-};
+-
+ Object.defineProperties(createChalk.prototype, styles);
+ 
+ const chalk = createChalk();
+diff --git a/source/index.test-d.ts b/source/index.test-d.ts
+index 45299d6b..2bd0ed5e 100644
+--- a/source/index.test-d.ts
++++ b/source/index.test-d.ts
+@@ -34,12 +34,6 @@ expectType<ChalkInstance>(new Chalk({level: 1}));
+ // -- Properties --
+ expectType<ColorSupportLevel>(chalk.level);
+ 
+-// -- Template literal --
+-expectType<string>(chalk``);
+-const name = 'John';
+-expectType<string>(chalk`Hello {bold.red ${name}}`);
+-expectType<string>(chalk`Works with numbers {bold.red ${1}}`);
+-
+ // -- Color methods --
+ expectAssignable<colorReturn>(chalk.rgb(0, 0, 0));
+ expectAssignable<colorReturn>(chalk.hex('#DEADED'));
+diff --git a/source/templates.js b/source/templates.js
+deleted file mode 100644
+index 590223f7..00000000
+--- a/source/templates.js
++++ /dev/null
+@@ -1,133 +0,0 @@
+-const TEMPLATE_REGEX = /(?:\\(u(?:[a-f\d]{4}|\{[a-f\d]{1,6}\})|x[a-f\d]{2}|.))|(?:\{(~)?(\w+(?:\([^)]*\))?(?:\.\w+(?:\([^)]*\))?)*)(?:[ \t]|(?=\r?\n)))|(\})|((?:.|[\r\n\f])+?)/gi;
+-const STYLE_REGEX = /(?:^|\.)(\w+)(?:\(([^)]*)\))?/g;
+-const STRING_REGEX = /^(['"])((?:\\.|(?!\1)[^\\])*)\1$/;
+-const ESCAPE_REGEX = /\\(u(?:[a-f\d]{4}|{[a-f\d]{1,6}})|x[a-f\d]{2}|.)|([^\\])/gi;
+-
+-const ESCAPES = new Map([
+-	['n', '\n'],
+-	['r', '\r'],
+-	['t', '\t'],
+-	['b', '\b'],
+-	['f', '\f'],
+-	['v', '\v'],
+-	['0', '\0'],
+-	['\\', '\\'],
+-	['e', '\u001B'],
+-	['a', '\u0007'],
+-]);
+-
+-function unescape(c) {
+-	const u = c[0] === 'u';
+-	const bracket = c[1] === '{';
+-
+-	if ((u && !bracket && c.length === 5) || (c[0] === 'x' && c.length === 3)) {
+-		return String.fromCharCode(Number.parseInt(c.slice(1), 16));
+-	}
+-
+-	if (u && bracket) {
+-		return String.fromCodePoint(Number.parseInt(c.slice(2, -1), 16));
+-	}
+-
+-	return ESCAPES.get(c) || c;
+-}
+-
+-function parseArguments(name, arguments_) {
+-	const results = [];
+-	const chunks = arguments_.trim().split(/\s*,\s*/g);
+-	let matches;
+-
+-	for (const chunk of chunks) {
+-		const number = Number(chunk);
+-		if (!Number.isNaN(number)) {
+-			results.push(number);
+-		} else if ((matches = chunk.match(STRING_REGEX))) {
+-			results.push(matches[2].replace(ESCAPE_REGEX, (m, escape, character) => escape ? unescape(escape) : character));
+-		} else {
+-			throw new Error(`Invalid Chalk template style argument: ${chunk} (in style '${name}')`);
+-		}
+-	}
+-
+-	return results;
+-}
+-
+-function parseStyle(style) {
+-	STYLE_REGEX.lastIndex = 0;
+-
+-	const results = [];
+-	let matches;
+-
+-	while ((matches = STYLE_REGEX.exec(style)) !== null) {
+-		const name = matches[1];
+-
+-		if (matches[2]) {
+-			const args = parseArguments(name, matches[2]);
+-			results.push([name, ...args]);
+-		} else {
+-			results.push([name]);
+-		}
+-	}
+-
+-	return results;
+-}
+-
+-function buildStyle(chalk, styles) {
+-	const enabled = {};
+-
+-	for (const layer of styles) {
+-		for (const style of layer.styles) {
+-			enabled[style[0]] = layer.inverse ? null : style.slice(1);
+-		}
+-	}
+-
+-	let current = chalk;
+-	for (const [styleName, styles] of Object.entries(enabled)) {
+-		if (!Array.isArray(styles)) {
+-			continue;
+-		}
+-
+-		if (!(styleName in current)) {
+-			throw new Error(`Unknown Chalk style: ${styleName}`);
+-		}
+-
+-		current = styles.length > 0 ? current[styleName](...styles) : current[styleName];
+-	}
+-
+-	return current;
+-}
+-
+-export default function template(chalk, temporary) {
+-	const styles = [];
+-	const chunks = [];
+-	let chunk = [];
+-
+-	// eslint-disable-next-line max-params
+-	temporary.replace(TEMPLATE_REGEX, (m, escapeCharacter, inverse, style, close, character) => {
+-		if (escapeCharacter) {
+-			chunk.push(unescape(escapeCharacter));
+-		} else if (style) {
+-			const string = chunk.join('');
+-			chunk = [];
+-			chunks.push(styles.length === 0 ? string : buildStyle(chalk, styles)(string));
+-			styles.push({inverse, styles: parseStyle(style)});
+-		} else if (close) {
+-			if (styles.length === 0) {
+-				throw new Error('Found extraneous } in Chalk template literal');
+-			}
+-
+-			chunks.push(buildStyle(chalk, styles)(chunk.join('')));
+-			chunk = [];
+-			styles.pop();
+-		} else {
+-			chunk.push(character);
+-		}
+-	});
+-
+-	chunks.push(chunk.join(''));
+-
+-	if (styles.length > 0) {
+-		const errorMessage = `Chalk template literal is missing ${styles.length} closing bracket${styles.length === 1 ? '' : 's'} (\`}\`)`;
+-		throw new Error(errorMessage);
+-	}
+-
+-	return chunks.join('');
+-}
+diff --git a/test/template-literal.js b/test/template-literal.js
+deleted file mode 100644
+index 5e737a53..00000000
+--- a/test/template-literal.js
++++ /dev/null
+@@ -1,194 +0,0 @@
+-/* eslint-disable unicorn/no-hex-escape */
+-import test from 'ava';
+-import chalk, {Chalk} from '../source/index.js';
+-
+-chalk.level = 1;
+-
+-test('return an empty string for an empty literal', t => {
+-	const instance = new Chalk();
+-	t.is(instance``, '');
+-});
+-
+-test('return a regular string for a literal with no templates', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`hello`, 'hello');
+-});
+-
+-test('correctly perform template parsing', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`{bold Hello, {cyan World!} This is a} test. {green Woo!}`,
+-		instance.bold('Hello,', instance.cyan('World!'), 'This is a') + ' test. ' + instance.green('Woo!'));
+-});
+-
+-test('correctly perform template substitutions', t => {
+-	const instance = new Chalk({level: 0});
+-	const name = 'Sindre';
+-	const exclamation = 'Neat';
+-	t.is(instance`{bold Hello, {cyan.inverse ${name}!} This is a} test. {green ${exclamation}!}`,
+-		instance.bold('Hello,', instance.cyan.inverse(name + '!'), 'This is a') + ' test. ' + instance.green(exclamation + '!'));
+-});
+-
+-test('correctly perform nested template substitutions', t => {
+-	const instance = new Chalk({level: 0});
+-	const name = 'Sindre';
+-	const exclamation = 'Neat';
+-	t.is(instance.bold`Hello, {cyan.inverse ${name}!} This is a` + ' test. ' + instance.green`${exclamation}!`,
+-		instance.bold('Hello,', instance.cyan.inverse(name + '!'), 'This is a') + ' test. ' + instance.green(exclamation + '!'));
+-
+-	t.is(instance.red.bgGreen.bold`Hello {italic.blue ${name}}`,
+-		instance.red.bgGreen.bold('Hello ' + instance.italic.blue(name)));
+-
+-	t.is(instance.strikethrough.cyanBright.bgBlack`Works with {reset {bold numbers}} {bold.red ${1}}`,
+-		instance.strikethrough.cyanBright.bgBlack('Works with ' + instance.reset.bold('numbers') + ' ' + instance.bold.red(1)));
+-
+-	t.is(chalk.bold`Also works on the shared {bgBlue chalk} object`,
+-		'\u001B[1mAlso works on the shared \u001B[1m'
+-		+ '\u001B[44mchalk\u001B[49m\u001B[22m'
+-		+ '\u001B[1m object\u001B[22m');
+-});
+-
+-test('correctly parse and evaluate color-convert functions', t => {
+-	const instance = new Chalk({level: 3});
+-	t.is(instance`{bold.rgb(144,10,178).inverse Hello, {~inverse there!}}`,
+-		'\u001B[1m\u001B[38;2;144;10;178m\u001B[7mHello, '
+-		+ '\u001B[27m\u001B[39m\u001B[22m\u001B[1m'
+-		+ '\u001B[38;2;144;10;178mthere!\u001B[39m\u001B[22m');
+-
+-	t.is(instance`{bold.bgRgb(144,10,178).inverse Hello, {~inverse there!}}`,
+-		'\u001B[1m\u001B[48;2;144;10;178m\u001B[7mHello, '
+-		+ '\u001B[27m\u001B[49m\u001B[22m\u001B[1m'
+-		+ '\u001B[48;2;144;10;178mthere!\u001B[49m\u001B[22m');
+-});
+-
+-test('properly handle escapes', t => {
+-	const instance = new Chalk({level: 3});
+-	t.is(instance`{bold hello \{in brackets\}}`,
+-		'\u001B[1mhello {in brackets}\u001B[22m');
+-});
+-
+-test('throw if there is an unclosed block', t => {
+-	const instance = new Chalk({level: 3});
+-	try {
+-		console.log(instance`{bold this shouldn't appear ever\}`);
+-		t.fail();
+-	} catch (error) {
+-		t.is(error.message, 'Chalk template literal is missing 1 closing bracket (`}`)');
+-	}
+-
+-	try {
+-		console.log(instance`{bold this shouldn't {inverse appear {underline ever\} :) \}`);
+-		t.fail();
+-	} catch (error) {
+-		t.is(error.message, 'Chalk template literal is missing 3 closing brackets (`}`)');
+-	}
+-});
+-
+-test('throw if there is an invalid style', t => {
+-	const instance = new Chalk({level: 3});
+-	try {
+-		console.log(instance`{abadstylethatdoesntexist this shouldn't appear ever}`);
+-		t.fail();
+-	} catch (error) {
+-		t.is(error.message, 'Unknown Chalk style: abadstylethatdoesntexist');
+-	}
+-});
+-
+-test('properly style multiline color blocks', t => {
+-	const instance = new Chalk({level: 3});
+-	t.is(
+-		instance`{bold
+-			Hello! This is a
+-			${'multiline'} block!
+-			:)
+-		} {underline
+-			I hope you enjoy
+-		}`,
+-		'\u001B[1m\u001B[22m\n'
+-		+ '\u001B[1m\t\t\tHello! This is a\u001B[22m\n'
+-		+ '\u001B[1m\t\t\tmultiline block!\u001B[22m\n'
+-		+ '\u001B[1m\t\t\t:)\u001B[22m\n'
+-		+ '\u001B[1m\t\t\u001B[22m \u001B[4m\u001B[24m\n'
+-		+ '\u001B[4m\t\t\tI hope you enjoy\u001B[24m\n'
+-		+ '\u001B[4m\t\t\u001B[24m',
+-	);
+-});
+-
+-test('escape interpolated values', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`Hello {bold hi}`, 'Hello hi');
+-	t.is(instance`Hello ${'{bold hi}'}`, 'Hello {bold hi}');
+-});
+-
+-test('allow custom colors (themes) on custom contexts', t => {
+-	const instance = new Chalk({level: 3});
+-	instance.rose = instance.hex('#F6D9D9');
+-	t.is(instance`Hello, {rose Rose}.`, 'Hello, \u001B[38;2;246;217;217mRose\u001B[39m.');
+-});
+-
+-test('correctly parse newline literals (bug #184)', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`Hello
+-{red there}`, 'Hello\nthere');
+-});
+-
+-test('correctly parse newline escapes (bug #177)', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`Hello\nthere!`, 'Hello\nthere!');
+-});
+-
+-test('correctly parse escape in parameters (bug #177 comment 318622809)', t => {
+-	const instance = new Chalk({level: 0});
+-	const string = '\\';
+-	t.is(instance`{blue ${string}}`, '\\');
+-});
+-
+-test('correctly parses unicode/hex escapes', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`\u0078ylophones are fo\x78y! {magenta.inverse \u0078ylophones are fo\x78y!}`,
+-		'xylophones are foxy! xylophones are foxy!');
+-});
+-
+-test('correctly parses string arguments', t => {
+-	const instance = new Chalk({level: 3});
+-	t.is(instance`{hex('#000000').bold can haz cheezburger}`, '\u001B[38;2;0;0;0m\u001B[1mcan haz cheezburger\u001B[22m\u001B[39m');
+-	t.is(instance`{hex('#00000\x30').bold can haz cheezburger}`, '\u001B[38;2;0;0;0m\u001B[1mcan haz cheezburger\u001B[22m\u001B[39m');
+-	t.is(instance`{hex('#00000\u0030').bold can haz cheezburger}`, '\u001B[38;2;0;0;0m\u001B[1mcan haz cheezburger\u001B[22m\u001B[39m');
+-});
+-
+-test('throws if a bad argument is encountered', t => {
+-	const instance = new Chalk({level: 3}); // Keep level at least 1 in case we optimize for disabled chalk instances
+-	try {
+-		console.log(instance`{hex(????) hi}`);
+-		t.fail();
+-	} catch (error) {
+-		t.is(error.message, 'Invalid Chalk template style argument: ???? (in style \'hex\')');
+-	}
+-});
+-
+-test('throws if an extra unescaped } is found', t => {
+-	const instance = new Chalk({level: 0});
+-	try {
+-		console.log(instance`{red hi!}}`);
+-		t.fail();
+-	} catch (error) {
+-		t.is(error.message, 'Found extraneous } in Chalk template literal');
+-	}
+-});
+-
+-test('should not parse upper-case escapes', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`\N\n\T\t\X07\x07\U000A\u000A\U000a\u000A`, 'N\nT\tX07\x07U000A\u000AU000a\u000A');
+-});
+-
+-test('should properly handle undefined template interpolated values', t => {
+-	const instance = new Chalk({level: 0});
+-	t.is(instance`hello ${undefined}`, 'hello undefined');
+-	t.is(instance`hello ${null}`, 'hello null');
+-});
+-
+-test('should allow bracketed Unicode escapes', t => {
+-	const instance = new Chalk({level: 3});
+-	t.is(instance`\u{AB}`, '\u{AB}');
+-	t.is(instance`This is a {bold \u{AB681}} test`, 'This is a \u001B[1m\u{AB681}\u001B[22m test');
+-	t.is(instance`This is a {bold \u{10FFFF}} test`, 'This is a \u001B[1m\u{10FFFF}\u001B[22m test');
+-});

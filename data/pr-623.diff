@@ -1,0 +1,12 @@
+diff --git a/examples/rainbow.js b/examples/rainbow.js
+index 71e3c37f..cfc4cef7 100644
+--- a/examples/rainbow.js
++++ b/examples/rainbow.js
+@@ -1,6 +1,6 @@
++import {setTimeout as delay} from 'node:timers/promises';
+ import convertColor from 'color-convert';
+ import updateLog from 'log-update';
+-import delay from 'yoctodelay';
+ import chalk from '../source/index.js';
+ 
+ const ignoreChars = /[^!-~]/g;

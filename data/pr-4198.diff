@@ -1,0 +1,1339 @@
+diff --git a/mise.toml b/mise.toml
+index 8709b50605..64ac0e58cb 100644
+--- a/mise.toml
++++ b/mise.toml
+@@ -6,7 +6,6 @@ config_roots = ["pkgs/*"]
+ # Stack
+ node = "latest"
+ pnpm = "latest"
+-bun = "latest"
+ 
+ # Tools
+ gh = "latest"
+@@ -28,6 +27,9 @@ run = "pnpm tsgo --build"
+ [tasks."types:watch"]
+ run = "pnpm tsgo --build --watch"
+ 
++[tasks.format]
++run = "pnpm oxfmt"
++
+ [tasks."lint"]
+ run = "pnpm oxlint"
+ 
+diff --git a/pkgs/core/CHANGELOG.md b/pkgs/core/CHANGELOG.md
+index 71d60b75b8..5201d176bc 100644
+--- a/pkgs/core/CHANGELOG.md
++++ b/pkgs/core/CHANGELOG.md
+@@ -8,7 +8,21 @@ This change log follows the format documented in [Keep a CHANGELOG].
+ [semantic versioning]: http://semver.org/
+ [keep a changelog]: http://keepachangelog.com/
+ 
+-## v4.3.0
++## v5.0.0-alpha.0 - 2026-05-30
++
++### Changed
++
++- **BREAKING**: The CDN scripts are now available via the `@date-fns/cdn` npm package instead of `date-fns`. Users relying on the latest CDN version (e.g., `https://cdn.jsdelivr.net/npm/date-fns/cdn.min.js`) would be served a polyfill that inserts a script with the correct URL (`https://cdn.jsdelivr.net/npm/@date-fns/cdn/cdn.min.js`) into the page.
++
++## v4.4.0 - 2026-05-30
++
++### Changed
++
++- **DEPRECATED**: The `date-fns` CDN scripts are now deprecated and will be removed in the next major release. Please switch to the new `@date-fns/cdn` package for CDN usage.
++
++- Removed CDN source maps to reduce the package size. If you rely on them, please switch to the new `@date-fns/cdn` package that still includes them.
++
++## v4.3.0 - 2026-05-22
+ 
+ Kudos to [@ImRodry](https://github.com/ImRodry) and [@puneetdixit200](https://github.com/puneetdixit200) for their contributions.
+ 
+diff --git a/pkgs/core/docs/cdn.md b/pkgs/core/docs/cdn.md
+index 30cd142b74..cb33f5038f 100644
+--- a/pkgs/core/docs/cdn.md
++++ b/pkgs/core/docs/cdn.md
+@@ -1,13 +1,15 @@
+ # CDN
+ 
+-Starting with v3.6.0, the CDN versions of date-fns are available on [jsDelivr](https://www.jsdelivr.com/package/npm/date-fns) and other CDNs. They expose the date-fns functionality via the `window.dateFns` global variable.
++The CDN versions of date-fns are available as the [`@date-fns/cdn`](https://www.jsdelivr.com/package/npm/@date-fns/cdn) package on jsDelivr and other CDNs. They expose the date-fns functionality via the `window.dateFns` global variable.
++
++> ⚠️ The legacy CDN files in the `date-fns` package are deprecated and will be removed in a future version. They remain available for compatibility, but they log a migration notice in the console. Please update your URLs from `date-fns` to `@date-fns/cdn`.
+ 
+ Unlike the npm package, the CDN is transpiled to be compatible with IE11, so it supports a wide variety of legacy browsers and environments.
+ 
+ ```html
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/locale/es/cdn.min.js"></script>
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/locale/ru/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/locale/es/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/locale/ru/cdn.min.js"></script>
+ <script>
+   dateFns.formatRelative(dateFns.subDays(new Date(), 3), new Date());
+   //=> "last Friday at 7:26 p.m."
+@@ -24,6 +26,13 @@ Unlike the npm package, the CDN is transpiled to be compatible with IE11, so it
+ </script>
+ ```
+ 
++Legacy URLs still work for now but should be replaced:
++
++```diff
++- https://cdn.jsdelivr.net/npm/date-fns@VERSION/cdn.min.js
+++ https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/cdn.min.js
++```
++
+ The CDN versions are available for the main module, all & individual locales, and the FP submodule.
+ 
+ They come in two flavors: `cdn.js` and `cdn.min.js`. The latter is minified and should be used in production. The former is useful for debugging and development.
+@@ -35,14 +44,14 @@ Keep in mind that using the CDN versions in production is suboptimal because the
+ The main module with all functions bundled:
+ 
+ ```
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/cdn.js
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/cdn.min.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/cdn.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/cdn.min.js
+ ```
+ 
+ You can access it via the `dateFns` global variable:
+ 
+ ```html
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/cdn.min.js"></script>
+ <script>
+   dateFns.addDays(new Date(2014, 1, 11), 10);
+   //=> Tue Feb 21 2014 00:00:00
+@@ -54,14 +63,14 @@ You can access it via the `dateFns` global variable:
+ The FP submodule with all functions bundled:
+ 
+ ```
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/fp/cdn.js
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/fp/cdn.min.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/fp/cdn.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/fp/cdn.min.js
+ ```
+ 
+ You can access it via the `dateFns.fp` global variable:
+ 
+ ```html
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/fp/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/fp/cdn.min.js"></script>
+ <script>
+   dateFns.fp.addDays(10, new Date(2014, 1, 11));
+   //=> Tue Feb 21 2014 00:00:00
+@@ -73,15 +82,15 @@ You can access it via the `dateFns.fp` global variable:
+ All locales bundled:
+ 
+ ```
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/locale/cdn.js
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/locale/cdn.min.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/locale/cdn.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/locale/cdn.min.js
+ ```
+ 
+ You can access them via the `dateFns.locale` global variable:
+ 
+ ```html
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/locale/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/locale/cdn.min.js"></script>
+ <script>
+   dateFns.formatRelative(dateFns.subDays(new Date(), 3), new Date(), {
+     locale: dateFns.locale.es,
+@@ -93,15 +102,15 @@ You can access them via the `dateFns.locale` global variable:
+ The locales are also available as individual files.
+ 
+ ```
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/locale/LOCALE/cdn.js
+-https://cdn.jsdelivr.net/npm/date-fns@VERSION/locale/LOCALE/cdn.min.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/locale/LOCALE/cdn.js
++https://cdn.jsdelivr.net/npm/@date-fns/cdn@VERSION/locale/LOCALE/cdn.min.js
+ ```
+ 
+ You can access them via the `dateFns.locale.LOCALE` global variable:
+ 
+ ```html
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+-<script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/locale/es/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/cdn.min.js"></script>
++<script src="https://cdn.jsdelivr.net/npm/@date-fns/cdn@4.4.0/locale/es/cdn.min.js"></script>
+ <script>
+   dateFns.formatRelative(dateFns.subDays(new Date(), 3), new Date(), {
+     locale: dateFns.locale.es,
+diff --git a/pkgs/core/examples/cdn/basic.js b/pkgs/core/examples/cdn/basic.js
+index f2eee5617a..b0c965c5c2 100644
+--- a/pkgs/core/examples/cdn/basic.js
++++ b/pkgs/core/examples/cdn/basic.js
+@@ -1,8 +1,12 @@
+ import { testScript } from "./dom.js";
+ 
+-testScript("cdn.min.js", (dom) => {
+-  const result = dom.window.eval(
+-    `window.dateFns.addDays(new Date(1987, 1, 11), 1).getDate()`,
+-  );
+-  console.log(result === 12);
++testScript({
++  script: "cdn.min.js",
++
++  run: (dom) => {
++    const result = dom.window.eval(
++      `window.dateFns.addDays(new Date(1987, 1, 11), 1).getDate()`,
++    );
++    console.log(result === 12);
++  },
+ });
+diff --git a/pkgs/core/examples/cdn/dom.js b/pkgs/core/examples/cdn/dom.js
+index 172b777c39..d94c6c2829 100644
+--- a/pkgs/core/examples/cdn/dom.js
++++ b/pkgs/core/examples/cdn/dom.js
+@@ -1,5 +1,5 @@
+-import { JSDOM, ResourceLoader } from "jsdom";
+ import { readFile } from "fs/promises";
++import { JSDOM, ResourceLoader, VirtualConsole } from "jsdom";
+ import { resolve } from "path";
+ 
+ class CustomResourceLoader extends ResourceLoader {
+@@ -13,23 +13,39 @@ const resources = new CustomResourceLoader({
+   proxy: "http://127.0.0.1:9182",
+   strictSSL: false,
+ });
++const virtualConsole = new VirtualConsole();
++
++virtualConsole.on("jsdomError", (error) => console.error(error));
+ 
+ const options = {
+   runScripts: "dangerously",
+   resources,
++  virtualConsole,
+ };
+ 
+-export function testScript(script, cb) {
++export function testScript(props) {
++  const {
++    script,
++    scripts,
++    run,
++    beforeParse,
++    pkg = process.env.DATE_FNS_CDN_TEST_PKG || "@date-fns/cdn",
++  } = props;
++
+   const dom = new JSDOM(
+     []
+-      .concat(script)
+-      .map(
+-        (script) =>
+-          `<script src="http://127.0.0.1:9182/node_modules/date-fns/${script}"></script>`,
+-      )
++      .concat(script || scripts)
++      .map((script) => {
++        if (script.src) return `<script src="${script.src}"></script>`;
++
++        const path = typeof script === "string" ? script : script.path;
++        const scriptPkg = typeof script === "string" ? pkg : script.pkg;
++
++        return `<script src="http://127.0.0.1:9182/node_modules/${scriptPkg}/${path}"></script>`;
++      })
+       .join("\n"),
+-    options,
++    { ...options, beforeParse },
+   );
+ 
+-  dom.window.addEventListener("DOMContentLoaded", () => cb(dom));
++  dom.window.addEventListener("load", () => run(dom));
+ }
+diff --git a/pkgs/core/examples/cdn/fp.js b/pkgs/core/examples/cdn/fp.js
+index e4315acfb3..c00a7a91a5 100644
+--- a/pkgs/core/examples/cdn/fp.js
++++ b/pkgs/core/examples/cdn/fp.js
+@@ -1,8 +1,12 @@
+ import { testScript } from "./dom.js";
+ 
+-testScript("fp/cdn.min.js", (dom) => {
+-  const result = dom.window.eval(
+-    `window.dateFns.fp.startOfWeekWithOptions({ weekStartsOn: 1 }, new Date(1987, 1, 11)).getDate()`,
+-  );
+-  console.log(result === 9);
++testScript({
++  script: "fp/cdn.min.js",
++
++  run: (dom) => {
++    const result = dom.window.eval(
++      `window.dateFns.fp.startOfWeekWithOptions({ weekStartsOn: 1 }, new Date(1987, 1, 11)).getDate()`,
++    );
++    console.log(result === 9);
++  },
+ });
+diff --git a/pkgs/core/examples/cdn/jquery.js b/pkgs/core/examples/cdn/jquery.js
+new file mode 100644
+index 0000000000..f8a11eaa4f
+--- /dev/null
++++ b/pkgs/core/examples/cdn/jquery.js
+@@ -0,0 +1,4 @@
++window.jQuery = window.$ = {
++  version: "fixture",
++  loaded: (window.jQuery && window.jQuery.loaded + 1) || 1,
++};
+diff --git a/pkgs/core/examples/cdn/legacy.js b/pkgs/core/examples/cdn/legacy.js
+new file mode 100644
+index 0000000000..d72ad074f0
+--- /dev/null
++++ b/pkgs/core/examples/cdn/legacy.js
+@@ -0,0 +1,36 @@
++import { testScript } from "./dom.js";
++
++testScript({
++  scripts: [
++    { src: "http://127.0.0.1:9182/jquery.js" },
++    "cdn.min.js",
++    "fp/cdn.min.js",
++    { src: "http://127.0.0.1:9182/jquery.js" },
++    "locale/cdn.min.js",
++    "locale/es/cdn.min.js",
++    { src: "http://127.0.0.1:9182/jquery.js" },
++  ],
++
++  run: (dom) => {
++    const addDaysResult = dom.window.eval(
++      `window.dateFns.addDays(new Date(1987, 1, 11), 1).getDate()`,
++    );
++    const fpResult = dom.window.eval(
++      `window.dateFns.fp.startOfWeekWithOptions({ weekStartsOn: 1 }, new Date(1987, 1, 11)).getDate()`,
++    );
++    const localeResult = dom.window.eval(
++      `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.es })`,
++    );
++
++    console.log(
++      addDaysResult === 12 &&
++        fpResult === 9 &&
++        localeResult === "el domingo pasado a las 00:00" &&
++        dom.window.$ === dom.window.jQuery &&
++        dom.window.jQuery.version === "fixture" &&
++        dom.window.jQuery.loaded === 3,
++    );
++  },
++
++  pkg: "date-fns",
++});
+diff --git a/pkgs/core/examples/cdn/legacyStrict.js b/pkgs/core/examples/cdn/legacyStrict.js
+new file mode 100644
+index 0000000000..a6b672cfc1
+--- /dev/null
++++ b/pkgs/core/examples/cdn/legacyStrict.js
+@@ -0,0 +1,47 @@
++import { testScript } from "./dom.js";
++
++testScript({
++  scripts: [
++    { src: "http://127.0.0.1:9182/jquery.js" },
++    "cdn.min.js",
++    "fp/cdn.min.js",
++    { src: "http://127.0.0.1:9182/jquery.js" },
++    "locale/cdn.min.js",
++    "locale/es/cdn.min.js",
++    { src: "http://127.0.0.1:9182/jquery.js" },
++  ],
++
++  beforeParse: (window) => {
++    // Simulate a strict environment where document.write is not allowed
++    window.document.write = () => {
++      throw new Error("Nope");
++    };
++  },
++
++  run: (dom) => {
++    dom.window.document.write = () => {
++      throw new Error("Nope");
++    };
++
++    const addDaysResult = dom.window.eval(
++      `window.dateFns.addDays(new Date(1987, 1, 11), 1).getDate()`,
++    );
++    const fpResult = dom.window.eval(
++      `window.dateFns.fp.startOfWeekWithOptions({ weekStartsOn: 1 }, new Date(1987, 1, 11)).getDate()`,
++    );
++    const localeResult = dom.window.eval(
++      `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.es })`,
++    );
++
++    console.log(
++      addDaysResult === 12 &&
++        fpResult === 9 &&
++        localeResult === "el domingo pasado a las 00:00" &&
++        dom.window.$ === dom.window.jQuery &&
++        dom.window.jQuery.version === "fixture" &&
++        dom.window.jQuery.loaded === 3,
++    );
++  },
++
++  pkg: "date-fns",
++});
+diff --git a/pkgs/core/examples/cdn/locale.js b/pkgs/core/examples/cdn/locale.js
+index 828b42d4a6..0999072202 100644
+--- a/pkgs/core/examples/cdn/locale.js
++++ b/pkgs/core/examples/cdn/locale.js
+@@ -1,8 +1,12 @@
+ import { testScript } from "./dom.js";
+ 
+-testScript(["cdn.min.js", "locale/es/cdn.min.js"], (dom) => {
+-  const result = dom.window.eval(
+-    `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.es })`,
+-  );
+-  console.log(result === "el domingo pasado a las 00:00");
++testScript({
++  scripts: ["cdn.min.js", "locale/es/cdn.min.js"],
++
++  run: (dom) => {
++    const result = dom.window.eval(
++      `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.es })`,
++    );
++    console.log(result === "el domingo pasado a las 00:00");
++  },
+ });
+diff --git a/pkgs/core/examples/cdn/locales.js b/pkgs/core/examples/cdn/locales.js
+index 4f069e47eb..0580468761 100644
+--- a/pkgs/core/examples/cdn/locales.js
++++ b/pkgs/core/examples/cdn/locales.js
+@@ -1,14 +1,18 @@
+ import { testScript } from "./dom.js";
+ 
+-testScript(["cdn.min.js", "locale/cdn.min.js"], (dom) => {
+-  const esResult = dom.window.eval(
+-    `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.es })`,
+-  );
+-  const ruResult = dom.window.eval(
+-    `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.ru })`,
+-  );
+-  console.log(
+-    esResult === "el domingo pasado a las 00:00" &&
+-      ruResult === "в прошлое воскресенье в 0:00",
+-  );
++testScript({
++  scripts: ["cdn.min.js", "locale/cdn.min.js"],
++
++  run: (dom) => {
++    const esResult = dom.window.eval(
++      `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.es })`,
++    );
++    const ruResult = dom.window.eval(
++      `window.dateFns.formatRelative(window.dateFns.subDays(new Date(1987, 1, 11), 3), new Date(1987, 1, 11), { locale: window.dateFns.locale.ru })`,
++    );
++    console.log(
++      esResult === "el domingo pasado a las 00:00" &&
++        ruResult === "в прошлое воскресенье в 0:00",
++    );
++  },
+ });
+diff --git a/pkgs/core/examples/cdn/package.json b/pkgs/core/examples/cdn/package.json
+index 114b3bb3df..46d769ee4c 100644
+--- a/pkgs/core/examples/cdn/package.json
++++ b/pkgs/core/examples/cdn/package.json
+@@ -7,13 +7,18 @@
+   "type": "module",
+   "main": "example.ts",
+   "scripts": {
+-    "build": "rm -rf node_modules/date-fns && mkdir -p node_modules && cp -r ../../dist node_modules/date-fns || pnpm run build-date-fns",
+-    "build-date-fns": "../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\"",
+-    "test": "pnpm run test-basic && pnpm run test-fp && pnpm run test-locale && pnpm run test-locales",
++    "build": "rm -rf node_modules/date-fns node_modules/@date-fns/cdn && mkdir -p node_modules/@date-fns && cp -r ../../dist/date-fns node_modules/date-fns && cp -r ../../dist/date-fns-cdn node_modules/@date-fns/cdn || pnpm run build-date-fns-split",
++    "build-date-fns": "mkdir -p node_modules/@date-fns && ../../scripts/build/package.sh --dist \"$(pwd)/node_modules\" --cdn-dist \"$(pwd)/node_modules/@date-fns/cdn\"",
++    "build-date-fns-split": "mkdir -p node_modules/@date-fns && ../../scripts/build/package.sh --dist \"$(pwd)/node_modules\" --cdn-dist \"$(pwd)/node_modules/@date-fns/cdn\" --split-cdn",
++    "test": "pnpm run test-split",
++    "test-date-fns": "env DATE_FNS_CDN_TEST_PKG=date-fns pnpm run test-basic && env DATE_FNS_CDN_TEST_PKG=date-fns pnpm run test-fp && env DATE_FNS_CDN_TEST_PKG=date-fns pnpm run test-locale && env DATE_FNS_CDN_TEST_PKG=date-fns pnpm run test-locales && pnpm run test-legacy && pnpm run test-legacy-strict",
++    "test-split": "pnpm run test-basic && pnpm run test-fp && pnpm run test-locale && pnpm run test-locales && pnpm run test-legacy && pnpm run test-legacy-strict",
+     "test-basic": "test $(env TZ=UTC node ./basic.js) = true",
+     "test-fp": "test $(env TZ=UTC node ./fp.js) = true",
+     "test-locale": "test $(env TZ=UTC node ./locale.js) = true",
+-    "test-locales": "test $(env TZ=UTC node ./locales.js) = true"
++    "test-locales": "test $(env TZ=UTC node ./locales.js) = true",
++    "test-legacy": "test $(env TZ=UTC node ./legacy.js) = true",
++    "test-legacy-strict": "test $(env TZ=UTC node ./legacyStrict.js) = true"
+   },
+   "dependencies": {
+     "jsdom": "^24.0.0"
+diff --git a/pkgs/core/examples/lodash-fp/package.json b/pkgs/core/examples/lodash-fp/package.json
+index f69f210d0d..36a78bf5f6 100644
+--- a/pkgs/core/examples/lodash-fp/package.json
++++ b/pkgs/core/examples/lodash-fp/package.json
+@@ -7,7 +7,7 @@
+   "main": "example.js",
+   "scripts": {
+     "build": "pnpm run build-date-fns && pnpm run build-esbuild",
+-    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\"",
++    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist/date-fns node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\" --no-cdn",
+     "build-esbuild": "esbuild example.js --outdir=dist",
+     "stats-size": "gzip-size dist/example.min.js",
+     "test": "test $(env TZ=UTC node ./dist/example.js) = true"
+diff --git a/pkgs/core/examples/node-esm/package.json b/pkgs/core/examples/node-esm/package.json
+index 286faf9538..277c4bfba1 100644
+--- a/pkgs/core/examples/node-esm/package.json
++++ b/pkgs/core/examples/node-esm/package.json
+@@ -7,8 +7,8 @@
+   "type": "module",
+   "main": "example.ts",
+   "scripts": {
+-    "build": "rm -rf node_modules/date-fns && mkdir -p node_modules && cp -r ../../dist node_modules/date-fns || pnpm run build-date-fns",
+-    "build-date-fns": "../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\"",
++    "build": "rm -rf node_modules/date-fns && mkdir -p node_modules && cp -r ../../dist/date-fns node_modules/date-fns || pnpm run build-date-fns",
++    "build-date-fns": "../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\" --no-cdn",
+     "test": "pnpm run test-example && pnpm run test-fp && pnpm run test-misc && pnpm run test-constants",
+     "test-example": "test $(env TZ=UTC node ./example.js) = true",
+     "test-fp": "test $(env TZ=UTC node ./fp.js) = true",
+diff --git a/pkgs/core/examples/rollup/package.json b/pkgs/core/examples/rollup/package.json
+index a656018d07..441109cb3b 100644
+--- a/pkgs/core/examples/rollup/package.json
++++ b/pkgs/core/examples/rollup/package.json
+@@ -8,7 +8,7 @@
+   "main": "example.js",
+   "scripts": {
+     "build": "pnpm run build-date-fns && pnpm run build-rollup",
+-    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\"",
++    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist/date-fns node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\" --no-cdn",
+     "build-rollup": "rollup --config",
+     "stats-size": "echo \"Minimal size: $(gzip-size dist/minimal.js)\nFormat size: $(gzip-size dist/example.js)\nFP size: $(gzip-size dist/fp.js)\nMisc size: $(gzip-size dist/misc.js)\"",
+     "test": "pnpm run test-example && pnpm run test-fp && pnpm run test-misc && pnpm run test-constants",
+diff --git a/pkgs/core/examples/typescript/package.json b/pkgs/core/examples/typescript/package.json
+index ae0d3e5814..4aacd3c6c3 100644
+--- a/pkgs/core/examples/typescript/package.json
++++ b/pkgs/core/examples/typescript/package.json
+@@ -6,7 +6,7 @@
+   "author": "Sasha Koss <koss@nocorp.me>",
+   "scripts": {
+     "build": "pnpm run build-date-fns && tsc && pnpm run build-tsc",
+-    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\"",
++    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist/date-fns node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\" --no-cdn",
+     "build-tsc": "tsc --outDir dist",
+     "build-esbuild": "esbuild constants.ts example.ts fp.ts misc.ts --outdir=dist",
+     "test": "pnpm run test-example && pnpm run test-fp && pnpm run test-misc && pnpm run test-constants",
+diff --git a/pkgs/core/examples/vite/package.json b/pkgs/core/examples/vite/package.json
+index 095d79e2df..312523e5df 100644
+--- a/pkgs/core/examples/vite/package.json
++++ b/pkgs/core/examples/vite/package.json
+@@ -5,7 +5,7 @@
+   "type": "module",
+   "scripts": {
+     "build": "pnpm run build-date-fns && tsc && vite build",
+-    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\"",
++    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist/date-fns node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\" --no-cdn",
+     "test": "echo \"We're just testing if it builds atm\""
+   },
+   "dependencies": {
+diff --git a/pkgs/core/examples/webpack/package.json b/pkgs/core/examples/webpack/package.json
+index a12b53467b..52e96495a4 100644
+--- a/pkgs/core/examples/webpack/package.json
++++ b/pkgs/core/examples/webpack/package.json
+@@ -7,7 +7,7 @@
+   "main": "example.js",
+   "scripts": {
+     "build": "pnpm run build-date-fns && pnpm run build-webpack",
+-    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\"",
++    "build-date-fns": "rm -rf node_modules/date-fns && cp -r ../../dist/date-fns node_modules/date-fns || ../../scripts/build/package.sh --dist \"$(pwd)/node_modules/date-fns\" --no-cdn",
+     "build-webpack": "webpack",
+     "stats-size": "echo \"Minimal size: $(gzip-size dist/minimal.min.js)\nFormat size: $(gzip-size dist/example.min.js)\nFP size: $(gzip-size dist/fp.min.js)\nMisc size: $(gzip-size dist/misc.min.js)\"",
+     "test": "pnpm run test-example && pnpm run test-fp && pnpm run test-misc && pnpm run test-constants",
+diff --git a/pkgs/core/mise.toml b/pkgs/core/mise.toml
+index 05f7998e73..9dd716a41d 100644
+--- a/pkgs/core/mise.toml
++++ b/pkgs/core/mise.toml
+@@ -38,7 +38,10 @@ run = "node ./scripts/build/localeSnapshots/index.ts --test"
+ env = { TZ = "utc" }
+ 
+ [tasks."test/smoke"]
+-run = "./scripts/test/smoke.sh"
++usage = '''
++arg "[test]" help="Smoke test to run" default=""
++'''
++run = "./scripts/test/smoke.sh ${usage_test}"
+ 
+ [tasks."test/types"]
+ run = "./scripts/test/types.sh"
+@@ -50,3 +53,46 @@ env = { TZ = "utc" }
+ [tasks."release/docs"]
+ run = "./scripts/release/docs.sh"
+ env = { APP_ENV = "production" }
++
++[tasks."size/cdn-polyfill"]
++usage = '''
++flag "-w --watch" help="Watch for changes and re-run the size check" default="false"
++'''
++run = '''
++#!/usr/bin/env bash
++
++file="src/_lib/cdnPolyfill.js"
++
++if [[ "${usage_watch:-false}" == "true" ]]; then
++  watchexec --watch "$file" --clear -- mise run size/cdn-polyfill
++  exit
++fi
++
++gray() {
++  printf "\e[0;30m$1\x1b[0m"
++}
++
++blue() {
++  printf "\e[0;34m$1\x1b[0m"
++}
++
++result=$(pnpm exec rolldown -m "$file")
++
++echo -e "$(blue "$file:")\n"
++echo -e "$(echo "$result" | gzip -c | wc -c) B\n"
++echo -e "$(gray "$result")\n"
++'''
++quiet = true
++
++[tasks."size/cdn-polyfill:watch"]
++run = { task = "size/cdn-polyfill", args = ["--watch"] }
++quiet = true
++
++[tasks."workbench/size-cdn-polyfill"]
++run = { tasks = [
++  "size/cdn-polyfill:watch",
++  "workbench/size-cdn-polyfill-test",
++] }
++
++[tasks."workbench/size-cdn-polyfill-test"]
++run = "watchexec --watch src/_lib/cdnPolyfill.js -- 'node ./scripts/build/cdnPolyfills.ts examples/cdn/node_modules/date-fns && cd examples/cdn && pnpm test'"
+diff --git a/pkgs/core/package.json b/pkgs/core/package.json
+index ef27db3aa7..ee0ea4de34 100644
+--- a/pkgs/core/package.json
++++ b/pkgs/core/package.json
+@@ -17,7 +17,6 @@
+   "main": "index.cjs",
+   "module": "index.js",
+   "browser": "./index",
+-  "jsdelivr": "./cdn.min.js",
+   "exports": {
+     "./package.json": "./package.json",
+     ".": "./src/index.ts",
+@@ -8186,7 +8185,6 @@
+     "@octokit/core": "^3.6.0",
+     "@size-limit/esbuild": "^11.2.0",
+     "@size-limit/file": "^11.2.0",
+-    "@types/bun": "^1.2.19",
+     "@types/lodash": "^4.17.20",
+     "@types/node": "^25.7.0",
+     "@typescript/native-preview": "7.0.0-dev.20260421.2",
+@@ -8206,6 +8204,7 @@
+     "oxlint-tsgolint": "^0.1.6",
+     "playwright": "^1.60.0",
+     "prettier": "^3.6.2",
++    "rolldown": "^1.0.2",
+     "simple-git": "^2.48.0",
+     "size-limit": "^11.2.0",
+     "typedoc": "^0.26.11",
+diff --git a/pkgs/core/scripts/build/cdn.ts b/pkgs/core/scripts/build/cdn.ts
+old mode 100755
+new mode 100644
+index b93892cbb5..b35188866f
+--- a/pkgs/core/scripts/build/cdn.ts
++++ b/pkgs/core/scripts/build/cdn.ts
+@@ -2,97 +2,175 @@
+  * The script builds the CDN version of the library.
+  */
+ 
+-import { $, type BuildOutput } from "bun";
+-import { readFile, writeFile } from "fs/promises";
++import { execFile } from "child_process";
++import { cp, mkdir, readFile, rm, writeFile } from "fs/promises";
+ import { availableParallelism } from "node:os";
+ import { dirname, join, relative } from "path";
++import { promisify } from "util";
++import { build } from "rolldown";
+ import { listLocales, type LocaleFile } from "../_lib/listLocales.ts";
+ import { promiseQueue } from "../test/_lib/queue.ts";
+ 
+-const outputPath = process.argv[2];
+-if (!outputPath) throw new Error("Output path is not set");
+-
+-const out = relative(process.cwd(), outputPath);
++if (!process.env.DATE_FNS_PACKAGE_OUTPUT_PATH)
++  throw new Error("DATE_FNS_PACKAGE_OUTPUT_PATH is not set");
++
++if (!process.env.DATE_FNS_CDN_OUTPUT_PATH)
++  throw new Error("DATE_FNS_CDN_OUTPUT_PATH is not set");
++
++const execFileAsync = promisify(execFile);
++const packageOut = relative(
++  process.cwd(),
++  process.env.DATE_FNS_PACKAGE_OUTPUT_PATH,
++);
++const out = relative(process.cwd(), process.env.DATE_FNS_CDN_OUTPUT_PATH);
++const entriesOut = join(out, "_entries");
++const cdnPackage = process.env.DATE_FNS_CDN_PACKAGE === "true";
++const sourceMaps = process.env.DATE_FNS_CDN_SOURCE_MAPS === "true";
++const warn = process.env.DATE_FNS_CDN_WARN === "true";
++const warning =
++  'console.log("date-fns CDN files have moved to @date-fns/cdn. Please update your URLs. See: https://date-fns.org/docs/CDN");';
+ 
+ const indexPath = join(out, "cdn.js");
+ const fpIndexPath = join(out, "fp", "cdn.js");
+ const localesIndexPath = join(out, "locale", "cdn.js");
++const locales = await listLocales();
++const outPaths = [
++  indexPath,
++  fpIndexPath,
++  localesIndexPath,
++  ...locales.map((locale) => join(out, "locale", locale.code, "cdn.js")),
++];
++
++if (cdnPackage) {
++  await rm(out, { recursive: true, force: true });
++} else {
++  await Promise.all(
++    outPaths
++      .flatMap((path) => [
++        path,
++        `${path}.map`,
++        minPath(path),
++        `${minPath(path)}.map`,
++      ])
++      .map((path) => rm(path, { force: true })),
++  );
++}
++
++await mkdir(entriesOut, { recursive: true });
+ 
+-Promise.all([
+-  listLocales().then((locales) =>
+-    Promise.all(
+-      locales.map(async (locale) => {
+-        const localePath = join(out, "locale", locale.code, "cdn.js");
+-        await $`mkdir -p ${dirname(localePath)}`;
+-        await writeFile(localePath, localeTemplate(locale));
+-        return localePath;
+-      }),
++if (cdnPackage) {
++  await Promise.all([
++    cp("LICENSE.md", join(out, "LICENSE.md")),
++    writeFile(
++      join(out, "README.md"),
++      "# @date-fns/cdn\n\nSee the date-fns CDN documentation: https://date-fns.org/docs/CDN\n",
+     ),
++    writePackageJSON(),
++  ]);
++}
++
++const entryPairs = await Promise.all([
++  Promise.all(
++    locales.map(async (locale) => {
++      const outPath = join(out, "locale", locale.code, "cdn.js");
++      const entryPath = join(entriesOut, "locale", locale.code, "cdn.js");
++      await mkdir(dirname(entryPath), { recursive: true });
++      await writeFile(entryPath, localeTemplate(locale, entryPath));
++      return [entryPath, outPath] as const;
++    }),
+   ),
+ 
+-  writeFile(indexPath, indexTemplate()).then(() => indexPath),
++  writeEntry(indexPath, indexTemplate(entryPathFor(indexPath))),
+ 
+-  writeFile(fpIndexPath, fpIndexTemplate()).then(() => fpIndexPath),
++  writeEntry(fpIndexPath, fpIndexTemplate(entryPathFor(fpIndexPath))),
+ 
+-  writeFile(localesIndexPath, localesIndexTemplate()).then(
+-    () => localesIndexPath,
++  writeEntry(
++    localesIndexPath,
++    localesIndexTemplate(entryPathFor(localesIndexPath)),
+   ),
+-])
+-  .then(([localePaths, ...indexPaths]) => localePaths.concat(indexPaths))
+-  .then(async (paths) => {
+-    const buildOptions = {
+-      entrypoints: paths,
+-      outdir: ".",
+-      sourcemap: "external" as const,
+-      root: ".",
+-    };
+-
+-    // First bundle code
+-    assertBunBuild(await Bun.build(buildOptions));
+-
+-    // Make it compatible with older browser
+-    await promiseQueue(
+-      paths.map((path) => async () => {
+-        // Use Babel to transpile
+-        assertShellOutput(
+-          await $`env BABEL_ENV=cdn pnpm babel ${path} --out-file ${path} --source-maps`,
+-        );
+-
+-        // Wrap into IIFE, to avoid polluting global scope
+-        const content = await readFile(path, "utf-8");
+-        await writeFile(path, `(() => {\n${content}\n})();`);
+-      }),
+-      availableParallelism(),
++]).then(([localePaths, ...indexPaths]) => localePaths.concat(indexPaths));
++
++await promiseQueue(
++  entryPairs.map(([entryPath, outPath]) => async () => {
++    await bundle(entryPath, outPath);
++
++    await execFileAsync(
++      "pnpm",
++      [
++        "babel",
++        outPath,
++        "--out-file",
++        outPath,
++        ...(sourceMaps ? ["--source-maps"] : []),
++      ],
++      { env: { ...process.env, BABEL_ENV: "cdn" } },
+     );
+ 
+-    // Now generate min versions
+-    assertBunBuild(
+-      await Bun.build({
+-        ...buildOptions,
+-        minify: true,
+-        naming: "/[dir]/[name].min.[ext]",
+-      }),
++    // Wrap into IIFE, to avoid polluting global scope.
++    const content = await readFile(outPath, "utf-8");
++    await writeFile(
++      outPath,
++      `(() => {\n${content}\n${warn ? warning : ""}\n})();`,
+     );
++
++    await bundle(outPath, minPath(outPath), { minify: true });
++  }),
++  availableParallelism(),
++);
++
++await rm(entriesOut, { recursive: true, force: true });
++
++async function writeEntry(outPath: string, content: string) {
++  const entryPath = entryPathFor(outPath);
++  await mkdir(dirname(entryPath), { recursive: true });
++  await writeFile(entryPath, content);
++  return [entryPath, outPath] as const;
++}
++
++function entryPathFor(outPath: string) {
++  return join(entriesOut, relative(out, outPath));
++}
++
++async function bundle(entryPath: string, outPath: string, options = {}) {
++  await mkdir(dirname(outPath), { recursive: true });
++  await build({
++    input: entryPath,
++    output: {
++      file: outPath,
++      format: "esm",
++      sourcemap: sourceMaps,
++      ...options,
++    },
+   });
++}
++
++function minPath(path: string) {
++  return path.replace(/\.js$/, ".min.js");
++}
++
++function packageImport(fromPath: string, packagePath: string) {
++  const importPath = relative(dirname(fromPath), join(packageOut, packagePath));
++  return importPath.startsWith(".") ? importPath : `./${importPath}`;
++}
+ 
+-function indexTemplate() {
+-  return `import * as dateFns from "./index.js";
++function indexTemplate(fromPath: string) {
++  return `import * as dateFns from "${packageImport(fromPath, "index.js")}";
+ window.dateFns = {
+   ...window.dateFns,
+   ...dateFns
+ };`;
+ }
+ 
+-function fpIndexTemplate() {
+-  return `import * as fp from "../fp.js";
++function fpIndexTemplate(fromPath: string) {
++  return `import * as fp from "${packageImport(fromPath, "fp.js")}";
+ window.dateFns = {
+   ...window.dateFns,
+   fp
+ };`;
+ }
+ 
+-function localesIndexTemplate() {
+-  return `import * as locales from "../locale.js";
++function localesIndexTemplate(fromPath: string) {
++  return `import * as locales from "${packageImport(fromPath, "locale.js")}";
+ window.dateFns = {
+   ...window.dateFns,
+   locale: {
+@@ -102,8 +180,8 @@ window.dateFns = {
+ };`;
+ }
+ 
+-function localeTemplate({ name, code }: LocaleFile) {
+-  return `import { ${name} } from "../${code}.js";
++function localeTemplate({ name, code }: LocaleFile, fromPath: string) {
++  return `import { ${name} } from "${packageImport(fromPath, `locale/${code}.js`)}";
+ window.dateFns = {
+   ...window.dateFns,
+   locale: {
+@@ -113,16 +191,23 @@ window.dateFns = {
+ };`;
+ }
+ 
+-function assertBunBuild(output: BuildOutput) {
+-  if (!output.success) {
+-    console.log(...output.logs);
+-    process.exit(1);
+-  }
+-}
+-
+-function assertShellOutput(output: $.ShellOutput) {
+-  if (output.exitCode !== 0) {
+-    console.log(output.stderr);
+-    process.exit(1);
+-  }
++async function writePackageJSON() {
++  const packageJSON = JSON.parse(await readFile("package.json", "utf-8"));
++  await writeFile(
++    join(out, "package.json"),
++    JSON.stringify(
++      {
++        name: "@date-fns/cdn",
++        version: packageJSON.version,
++        description: "CDN bundles for date-fns",
++        license: packageJSON.license,
++        contributors: packageJSON.contributors,
++        repository: packageJSON.repository,
++        type: "module",
++        jsdelivr: "./cdn.min.js",
++      },
++      null,
++      2,
++    ) + "\n",
++  );
+ }
+diff --git a/pkgs/core/scripts/build/cdnPolyfills.ts b/pkgs/core/scripts/build/cdnPolyfills.ts
+new file mode 100644
+index 0000000000..2b79d2eeb4
+--- /dev/null
++++ b/pkgs/core/scripts/build/cdnPolyfills.ts
+@@ -0,0 +1,47 @@
++#!/usr/bin/env node
++
++import { mkdir, readFile, rm, writeFile } from "fs/promises";
++import { dirname, join } from "path";
++import { build } from "rolldown";
++import { listLocales } from "../_lib/listLocales.ts";
++
++const out = process.argv[2];
++if (!out) throw new Error("Output path is not set");
++
++const polyfillPath = "src/_lib/cdnPolyfill.js";
++
++const source = await readFile(polyfillPath, "utf-8");
++const minPath = join(out, "_cdn.min.js");
++await build({
++  input: polyfillPath,
++  output: {
++    file: minPath,
++    format: "esm",
++    minify: true,
++    sourcemap: false,
++  },
++});
++const minified = await readFile(minPath, "utf-8");
++await rm(minPath);
++const localeCodes = (await listLocales()).map((locale) => locale.code);
++
++const paths = [
++  "cdn.js",
++  "cdn.min.js",
++  "fp/cdn.js",
++  "fp/cdn.min.js",
++  "locale/cdn.js",
++  "locale/cdn.min.js",
++  ...localeCodes.flatMap((code) => [
++    `locale/${code}/cdn.js`,
++    `locale/${code}/cdn.min.js`,
++  ]),
++];
++
++await Promise.all(
++  paths.map(async (path) => {
++    const filePath = join(out, path);
++    await mkdir(dirname(filePath), { recursive: true });
++    await writeFile(filePath, path.endsWith(".min.js") ? minified : source);
++  }),
++);
+diff --git a/pkgs/core/scripts/build/package.sh b/pkgs/core/scripts/build/package.sh
+index b9072e9756..a19372afed 100755
+--- a/pkgs/core/scripts/build/package.sh
++++ b/pkgs/core/scripts/build/package.sh
+@@ -13,7 +13,10 @@ format_code=true
+ include_docs=true
+ include_fp=true
+ include_i18n=true
++split_cdn=false
++dist_provided=false
+ dist=
++cdn_dist=
+ 
+ while [ "$#" -gt 0 ]; do
+   case "$1" in
+@@ -24,8 +27,22 @@ while [ "$#" -gt 0 ]; do
+       fi
+ 
+       dist="$2"
++      dist_provided=true
+       shift 2
+       ;;
++    --cdn-dist)
++      if [ -z "$2" ]; then
++        echo "Missing value for --cdn-dist"
++        exit 1
++      fi
++
++      cdn_dist="$2"
++      shift 2
++      ;;
++    --split-cdn)
++      split_cdn=true
++      shift
++      ;;
+     --no-cjs)
+       build_cjs=false
+       shift
+@@ -65,11 +82,20 @@ echo "⚡️ Building package"
+ root="$(pwd)/$(dirname "$0")/../.."
+ cd "$root" || exit 1
+ 
+-# XXX: $dir must be an absolute path!
+-dir=${dist:-"$root/dist"}
++# XXX: $dist must be an absolute path!
++dist=${dist:-"$root/dist"}
++dir="$dist/date-fns"
++cdn_dir=${cdn_dist:-"$dist/date-fns-cdn"}
++
++if [ "$dist_provided" = false ]; then
++  rm -rf "$dist"
++else
++  rm -rf "$dir" "$cdn_dir"
++fi
++
++export DATE_FNS_PACKAGE_OUTPUT_PATH="$dir"
+ 
+ # Clean up output dir
+-rm -rf "$dir"
+ mkdir -p "$dir"
+ 
+ #endregion
+@@ -137,7 +163,7 @@ echo "🚧 Formatting code..."
+ 
+ # Make it prettier
+ if [ "$format_code" = true ]; then
+-  pnpm prettier --write --ignore-path "" "$dir" 1> /dev/null
++  pnpm prettier --write --ignore-path "" --with-node-modules "$dir" 1> /dev/null
+ 
+   echo "🟢 Formatting is complete!"
+ else
+@@ -213,7 +239,21 @@ echo
+ if [ "$build_cdn" = true ]; then
+   echo "🚧 Building CDN versions..."
+ 
+-  bun ./scripts/build/cdn.ts "$dir"
++  DATE_FNS_CDN_OUTPUT_PATH="$cdn_dir" \
++    DATE_FNS_CDN_PACKAGE=true \
++    DATE_FNS_CDN_SOURCE_MAPS=true \
++    DATE_FNS_CDN_WARN=false \
++    node ./scripts/build/cdn.ts
++
++  if [ "$split_cdn" = true ]; then
++    node ./scripts/build/cdnPolyfills.ts "$dir"
++  else
++    DATE_FNS_CDN_OUTPUT_PATH="$dir" \
++      DATE_FNS_CDN_PACKAGE=false \
++      DATE_FNS_CDN_SOURCE_MAPS=false \
++      DATE_FNS_CDN_WARN=true \
++      node ./scripts/build/cdn.ts
++  fi
+ 
+   echo "🟢 CDN versions are ready!"
+ else
+diff --git a/pkgs/core/scripts/release/release.sh b/pkgs/core/scripts/release/release.sh
+index 3bfda6b8fd..b8ac478038 100755
+--- a/pkgs/core/scripts/release/release.sh
++++ b/pkgs/core/scripts/release/release.sh
+@@ -21,13 +21,27 @@ git commit -m "Prepare $VERSION"
+ git tag -a "$VERSION" -m "$VERSION"
+ git push
+ 
+-# Build the package
++# Build the packages
+ package_path="$(pwd)/../../tmp/package"
+-./scripts/build/package.sh --dist "$package_path"
++if [ "$IS_PRE_RELEASE" = true ]
++then
++  ./scripts/build/package.sh --dist "$package_path" --split-cdn
++else
++  ./scripts/build/package.sh --dist "$package_path"
++fi
+ 
+ # Right now, we do releases manually, but when we move to GitHub Actions we'll need this line:
+ # echo "//registry.npmjs.org/:_authToken=$NPM_KEY" > ~/.npmrc
+-cd "$package_path" || exit 1
++cd "$package_path/date-fns" || exit 1
++if [ "$IS_PRE_RELEASE" = true ]
++then
++  pnpm publish --tag next
++else
++  pnpm publish
++fi
++cd - || exit
++
++cd "$package_path/date-fns-cdn" || exit 1
+ if [ "$IS_PRE_RELEASE" = true ]
+ then
+   pnpm publish --tag next
+diff --git a/pkgs/core/scripts/test/smoke.sh b/pkgs/core/scripts/test/smoke.sh
+index 328dff2698..468d172493 100755
+--- a/pkgs/core/scripts/test/smoke.sh
++++ b/pkgs/core/scripts/test/smoke.sh
+@@ -14,11 +14,23 @@ scripts/build/package.sh
+ cd "$dir" || exit 1
+ pnpm install
+ 
+-for example in `ls`
++if [ -n "$1" ]; then
++  examples="$1"
++else
++  examples="$(ls)"
++fi
++
++for example in $examples
+ do
+   if [ ! -f "$example/package.json" ]; then
++    if [ -n "$1" ]; then
++      printf "$error_message"
++      printf "Example '$example' does not exist or has no package.json\n"
++      exit 1
++    fi
+     continue
+   fi
++
+   printf "\n\033[0;32mTesting $example...\033[0m\n\n"
+   cd "$example" || exit 1
+   pnpm run build
+diff --git a/pkgs/core/scripts/test/types.sh b/pkgs/core/scripts/test/types.sh
+index e93ebf6c9e..4b9ec5b9be 100755
+--- a/pkgs/core/scripts/test/types.sh
++++ b/pkgs/core/scripts/test/types.sh
+@@ -4,8 +4,12 @@
+ #
+ # It's a part of the test process.
+ 
++echo "🟠 These tests are deprecated as attw hangs on date-fns and will be removed in the future. If needed, add a smoke test to \`pkgs/core/examples\`".
++exit 0
++
+ set -e
+ 
++
+ root="$(pwd)/$(dirname "$0")/../.."
+ root_rel_path="$root/tmp/types"
+ mkdir -p "$root_rel_path"
+diff --git a/pkgs/core/src/_lib/cdnPolyfill.js b/pkgs/core/src/_lib/cdnPolyfill.js
+new file mode 100644
+index 0000000000..45138e5696
+--- /dev/null
++++ b/pkgs/core/src/_lib/cdnPolyfill.js
+@@ -0,0 +1,38 @@
++(function () {
++  console.log(
++    "date-fns CDN files have moved to @date-fns/cdn. Please update your URLs. See: https://date-fns.org/docs/CDN",
++  );
++
++  var re = /src="(.+\/date-fns\/.*(cdn|cdn.min).js)"/;
++  var html =
++    document.currentScript && cloneScriptHtml(document.currentScript.outerHTML);
++
++  try {
++    html && document.write(html);
++  } catch (_) {
++    insertScriptFromHTML(html);
++  }
++
++  function cloneScriptHtml(html) {
++    return (
++      re.test(html) &&
++      html.replace(re, function (_, src) {
++        return 'src="' + src.replace("/date-fns/", "/@date-fns/cdn/") + '"';
++      })
++    );
++  }
++
++  function insertScriptFromHTML(html) {
++    const template = document.createElement("template");
++    template.innerHTML = html;
++
++    const script = template.content.querySelector("script");
++    const newScript = document.createElement("script");
++
++    for (const attr of script.attributes) {
++      newScript.setAttribute(attr.name, attr.value);
++    }
++
++    document.head.appendChild(newScript);
++  }
++})();
+diff --git a/pkgs/core/src/formatISO/test.ts b/pkgs/core/src/formatISO/test.ts
+index cd9dd27e99..5349192083 100644
+--- a/pkgs/core/src/formatISO/test.ts
++++ b/pkgs/core/src/formatISO/test.ts
+@@ -9,10 +9,7 @@ describe("formatISO", () => {
+     const tzOffsetExtended = generateOffset(date);
+     expect(formatISO(date)).toBe(`2019-03-03T19:00:52${tzOffsetExtended}`);
+ 
+-    const getTimezoneOffsetStub = vi.spyOn(
+-      Date.prototype,
+-      "getTimezoneOffset",
+-    );
++    const getTimezoneOffsetStub = vi.spyOn(Date.prototype, "getTimezoneOffset");
+ 
+     getTimezoneOffsetStub.mockReturnValue(480);
+     const tzNegativeOffsetExtended = generateOffset(date);
+diff --git a/pkgs/core/src/formatRFC3339/test.ts b/pkgs/core/src/formatRFC3339/test.ts
+index fb60f6b9b9..5e5d67d60a 100644
+--- a/pkgs/core/src/formatRFC3339/test.ts
++++ b/pkgs/core/src/formatRFC3339/test.ts
+@@ -10,10 +10,7 @@ describe("formatRFC3339", () => {
+       `2019-03-03T19:00:52${generateOffset(date)}`,
+     );
+ 
+-    const getTimezoneOffsetStub = vi.spyOn(
+-      Date.prototype,
+-      "getTimezoneOffset",
+-    );
++    const getTimezoneOffsetStub = vi.spyOn(Date.prototype, "getTimezoneOffset");
+ 
+     getTimezoneOffsetStub.mockReturnValue(0);
+     expect(formatRFC3339(date)).toBe("2019-03-03T19:00:52Z");
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index 7b737f33b5..65d68f8c3f 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -62,9 +62,6 @@ importers:
+       '@size-limit/file':
+         specifier: ^11.2.0
+         version: 11.2.0(size-limit@11.2.0)
+-      '@types/bun':
+-        specifier: ^1.2.19
+-        version: 1.2.19(@types/react@19.1.9)
+       '@types/lodash':
+         specifier: ^4.17.20
+         version: 4.17.20
+@@ -122,6 +119,9 @@ importers:
+       prettier:
+         specifier: ^3.6.2
+         version: 3.6.2
++      rolldown:
++        specifier: ^1.0.2
++        version: 1.0.2
+       simple-git:
+         specifier: ^2.48.0
+         version: 2.48.0
+@@ -2804,9 +2804,6 @@ packages:
+   '@types/body-parser@1.19.6':
+     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
+ 
+-  '@types/bun@1.2.19':
+-    resolution: {integrity: sha512-d9ZCmrH3CJ2uYKXQIUuZ/pUnTqIvLDS0SK7pFmbx8ma+ziH/FRMoAq5bYpRG7y+w1gl+HgyNZbtqgMq4W4e2Lg==}
+-
+   '@types/caseless@0.12.5':
+     resolution: {integrity: sha512-hWtVTC2q7hc7xZ/RLbxapMvDMgUnDvKvMOpKal4DrMyfGBUfB1oKaZlIRr6mJL+If3bAP6sV/QneGzF6tJjZDg==}
+ 
+@@ -2876,9 +2873,6 @@ packages:
+   '@types/range-parser@1.2.7':
+     resolution: {integrity: sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==}
+ 
+-  '@types/react@19.1.9':
+-    resolution: {integrity: sha512-WmdoynAX8Stew/36uTSVMcLJJ1KRh6L3IZRx1PZ7qJtBqT3dYTgyDTx8H1qoRghErydW7xw9mSJ3wS//tCRpFA==}
+-
+   '@types/request@2.48.13':
+     resolution: {integrity: sha512-FGJ6udDNUCjd19pp0Q3iTiDkwhYup7J8hpMW9c4k53NrccQFFWKRho6hvtPPEhnXWKvukfwAlB6DbDz4yhH5Gg==}
+ 
+@@ -3170,11 +3164,6 @@ packages:
+   buffer-from@1.1.2:
+     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
+ 
+-  bun-types@1.2.19:
+-    resolution: {integrity: sha512-uAOTaZSPuYsWIXRpj7o56Let0g/wjihKCkeRqUBhlLVM/Bt+Fj9xTo+LhC1OV1XDaGkz4hNC80et5xgy+9KTHQ==}
+-    peerDependencies:
+-      '@types/react': ^19
+-
+   bytes-iec@3.1.1:
+     resolution: {integrity: sha512-fey6+4jDK7TFtFg/klGSvNKJctyU7n2aQdnM+CO0ruLPbqqMOM8Tio0Pc+deqUeVKX1tL5DQep1zQ7+37aTAsA==}
+     engines: {node: '>= 0.8'}
+@@ -3320,9 +3309,6 @@ packages:
+     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
+     engines: {node: '>= 8'}
+ 
+-  csstype@3.2.3:
+-    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+-
+   dashdash@1.14.1:
+     resolution: {integrity: sha512-jRFi8UDGo6j+odZiEpjazZaWqEal3w/basFjQHQEwVtZJGDpxbH1MeYluwCS8Xq5wmLJooDlMgvVarmWfGM44g==}
+     engines: {node: '>=0.10'}
+@@ -7453,12 +7439,6 @@ snapshots:
+       '@types/connect': 3.4.38
+       '@types/node': 25.7.0
+ 
+-  '@types/bun@1.2.19(@types/react@19.1.9)':
+-    dependencies:
+-      bun-types: 1.2.19(@types/react@19.1.9)
+-    transitivePeerDependencies:
+-      - '@types/react'
+-
+   '@types/caseless@0.12.5':
+     optional: true
+ 
+@@ -7539,10 +7519,6 @@ snapshots:
+ 
+   '@types/range-parser@1.2.7': {}
+ 
+-  '@types/react@19.1.9':
+-    dependencies:
+-      csstype: 3.2.3
+-
+   '@types/request@2.48.13':
+     dependencies:
+       '@types/caseless': 0.12.5
+@@ -7680,9 +7656,9 @@ snapshots:
+       obug: 2.1.1
+       std-env: 4.1.0
+       tinyrainbow: 3.1.0
+-      vitest: 4.1.6(@opentelemetry/api@1.9.0)(@types/node@20.19.9)(@vitest/browser-playwright@4.1.6)(@vitest/coverage-v8@4.1.6)(vite@7.0.6(@types/node@20.19.9)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.3)(yaml@2.8.0))
++      vitest: 4.1.6(@opentelemetry/api@1.9.0)(@types/node@25.7.0)(@vitest/browser-playwright@4.1.6)(@vitest/coverage-v8@4.1.6)(vite@7.0.6(@types/node@25.7.0)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.3)(yaml@2.8.0))
+     optionalDependencies:
+-      '@vitest/browser': 4.1.6(vite@7.0.6(@types/node@20.19.9)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.3)(yaml@2.8.0))(vitest@4.1.6)
++      '@vitest/browser': 4.1.6(vite@7.0.6(@types/node@25.7.0)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.3)(yaml@2.8.0))(vitest@4.1.6)
+ 
+   '@vitest/expect@4.1.6':
+     dependencies:
+@@ -7917,11 +7893,6 @@ snapshots:
+ 
+   buffer-from@1.1.2: {}
+ 
+-  bun-types@1.2.19(@types/react@19.1.9):
+-    dependencies:
+-      '@types/node': 25.7.0
+-      '@types/react': 19.1.9
+-
+   bytes-iec@3.1.1: {}
+ 
+   cac@6.7.14: {}
+@@ -8068,8 +8039,6 @@ snapshots:
+       shebang-command: 2.0.0
+       which: 2.0.2
+ 
+-  csstype@3.2.3: {}
+-
+   dashdash@1.14.1:
+     dependencies:
+       assert-plus: 1.0.0

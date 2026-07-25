@@ -1,0 +1,166 @@
+diff --git a/examples/screenshot.js b/examples/screenshot.js
+index 6d5ed153..6f66b778 100644
+--- a/examples/screenshot.js
++++ b/examples/screenshot.js
+@@ -1,3 +1,4 @@
++import process from 'node:process';
+ import styles from 'ansi-styles';
+ import chalk from '../source/index.js';
+ 
+diff --git a/package.json b/package.json
+index ef0cc138..703426bd 100644
+--- a/package.json
++++ b/package.json
+@@ -42,7 +42,7 @@
+ 	],
+ 	"dependencies": {
+ 		"ansi-styles": "^6.1.0",
+-		"supports-color": "^9.0.2"
++		"supports-color": "^9.1.0"
+ 	},
+ 	"devDependencies": {
+ 		"ava": "^3.15.0",
+@@ -54,7 +54,7 @@
+ 		"nyc": "^15.1.0",
+ 		"tsd": "^0.17.0",
+ 		"typescript": "^4.3.5",
+-		"xo": "^0.42.0",
++		"xo": "^0.46.4",
+ 		"yoctodelay": "^1.2.0"
+ 	},
+ 	"types": "./source/index.d.ts",
+diff --git a/source/index.d.ts b/source/index.d.ts
+index a6c6f762..cf6fb339 100644
+--- a/source/index.d.ts
++++ b/source/index.d.ts
+@@ -1,3 +1,5 @@
++import {ColorInfo, ColorSupportLevel} from 'supports-color';
++
+ /**
+ Basic foreground colors.
+ 
+@@ -67,15 +69,6 @@ export type Modifiers =
+ 	| 'strikethrough'
+ 	| 'visible';
+ 
+-/**
+-Levels:
+-- `0` - All colors disabled.
+-- `1` - Basic 16 colors support.
+-- `2` - ANSI 256 colors support.
+-- `3` - Truecolor 16 million colors support.
+-*/
+-export type ColorSupportLevel = 0 | 1 | 2 | 3;
+-
+ export interface Options {
+ 	/**
+ 	Specify the color support for Chalk.
+@@ -94,32 +87,7 @@ export interface Options {
+ /**
+ Return a new Chalk instance.
+ */
+-export const Chalk: new (options?: Options) => ChalkInstance;
+-
+-/**
+-Detect whether the terminal supports color.
+-*/
+-export interface ColorSupport {
+-	/**
+-	The color level used by Chalk.
+-	*/
+-	level: ColorSupportLevel;
+-
+-	/**
+-	Return whether Chalk supports basic 16 colors.
+-	*/
+-	hasBasic: boolean;
+-
+-	/**
+-	Return whether Chalk supports ANSI 256 colors.
+-	*/
+-	has256: boolean;
+-
+-	/**
+-	Return whether Chalk supports Truecolor 16 million colors.
+-	*/
+-	has16m: boolean;
+-}
++export const Chalk: new (options?: Options) => ChalkInstance; // eslint-disable-line @typescript-eslint/naming-convention
+ 
+ export interface ChalkInstance {
+ 	(...text: unknown[]): string;
+@@ -333,9 +301,15 @@ This simply means that `chalk.red.yellow.green` is equivalent to `chalk.green`.
+ */
+ declare const chalk: ChalkInstance;
+ 
+-export const supportsColor: ColorSupport | false;
++export const supportsColor: ColorInfo;
+ 
+ export const chalkStderr: typeof chalk;
+ export const supportsColorStderr: typeof supportsColor;
+ 
++export {
++	ColorInfo,
++	ColorSupport,
++	ColorSupportLevel,
++} from 'supports-color';
++
+ export default chalk;
+diff --git a/source/index.test-d.ts b/source/index.test-d.ts
+index 2bd0ed5e..a1ef8543 100644
+--- a/source/index.test-d.ts
++++ b/source/index.test-d.ts
+@@ -1,12 +1,11 @@
+ import {expectType, expectAssignable, expectError} from 'tsd';
+-import chalk, {Chalk, ChalkInstance, Color, ColorSupport, ColorSupportLevel, chalkStderr, supportsColor, supportsColorStderr} from './index.js';
+-
+-// - Helpers -
+-type colorReturn = ChalkInstance & {supportsColor?: never};
++import chalk, {Chalk, ChalkInstance, Color, ColorInfo, ColorSupport, ColorSupportLevel, chalkStderr, supportsColor, supportsColorStderr} from './index.js';
+ 
+ // - supportsColor -
+-expectType<ColorSupport | false>(supportsColor);
++expectType<ColorInfo>(supportsColor);
+ if (supportsColor) {
++	expectType<ColorSupport>(supportsColor);
++	expectType<ColorSupportLevel>(supportsColor.level);
+ 	expectType<boolean>(supportsColor.hasBasic);
+ 	expectType<boolean>(supportsColor.has256);
+ 	expectType<boolean>(supportsColor.has16m);
+@@ -14,7 +13,7 @@ if (supportsColor) {
+ 
+ // - stderr -
+ expectAssignable<ChalkInstance>(chalkStderr);
+-expectType<ColorSupport | false>(supportsColorStderr);
++expectType<ColorInfo>(supportsColorStderr);
+ if (supportsColorStderr) {
+ 	expectType<boolean>(supportsColorStderr.hasBasic);
+ 	expectType<boolean>(supportsColorStderr.has256);
+@@ -35,12 +34,12 @@ expectType<ChalkInstance>(new Chalk({level: 1}));
+ expectType<ColorSupportLevel>(chalk.level);
+ 
+ // -- Color methods --
+-expectAssignable<colorReturn>(chalk.rgb(0, 0, 0));
+-expectAssignable<colorReturn>(chalk.hex('#DEADED'));
+-expectAssignable<colorReturn>(chalk.ansi256(0));
+-expectAssignable<colorReturn>(chalk.bgRgb(0, 0, 0));
+-expectAssignable<colorReturn>(chalk.bgHex('#DEADED'));
+-expectAssignable<colorReturn>(chalk.bgAnsi256(0));
++expectType<ChalkInstance>(chalk.rgb(0, 0, 0));
++expectType<ChalkInstance>(chalk.hex('#DEADED'));
++expectType<ChalkInstance>(chalk.ansi256(0));
++expectType<ChalkInstance>(chalk.bgRgb(0, 0, 0));
++expectType<ChalkInstance>(chalk.bgHex('#DEADED'));
++expectType<ChalkInstance>(chalk.bgAnsi256(0));
+ 
+ // -- Modifiers --
+ expectType<string>(chalk.reset('foo'));
+diff --git a/test/chalk.js b/test/chalk.js
+index 32b57c6e..8d58e459 100644
+--- a/test/chalk.js
++++ b/test/chalk.js
+@@ -1,3 +1,4 @@
++import process from 'node:process';
+ import test from 'ava';
+ import chalk, {Chalk, chalkStderr} from '../source/index.js';
+ 

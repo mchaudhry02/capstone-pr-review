@@ -1,0 +1,313 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index af29c1de86..efd60884a7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -90,7 +90,7 @@ This release is brought to you by @kossnocorp, @fturmel, @grossbart, @MelvinVerm
+ 
+ ### Fixed
+ 
+-- Fixed types compatability with Lodash's `flow` and fp-ts's `pipe`. ([#3641](https://github.com/date-fns/date-fns/issues/3641))
++- Fixed types compatibility with Lodash's `flow` and fp-ts's `pipe`. ([#3641](https://github.com/date-fns/date-fns/issues/3641))
+ 
+ - [Fixed inconsistent behavior of `roundToNearestMinutes`.](https://github.com/date-fns/date-fns/pull/3132)
+ 
+@@ -1599,7 +1599,7 @@ If you're upgrading from v2 alpha or beta, [see the pre-release changelog](https
+ 
+ - [New `roundToNearestMinutes` function](https://github.com/date-fns/date-fns/pull/928). Kudos to [@xkizer](https://github.com/xkizer).
+ 
+-- Added new function `fromUnixTime`. Thansk to [@xkizer](https://github.com/xkizer).
++- Added new function `fromUnixTime`. Thanks to [@xkizer](https://github.com/xkizer).
+ 
+ - New interval, month, and year helpers to fetch a list of all Saturdays and Sundays (weekends) for a given date interval. `eachWeekendOfInterval` is the handler function while the other two are wrapper functions. Kudos to [@laekettavong](https://github.com/laekettavong)!
+ 
+diff --git a/scripts/build/fp.ts b/scripts/build/fp.ts
+index b5f3904f67..1baee89173 100755
+--- a/scripts/build/fp.ts
++++ b/scripts/build/fp.ts
+@@ -24,8 +24,8 @@ async function main() {
+ 
+       const name = ref.ref.name;
+       const hasOptions = !!ref.fn.signatures?.find(
+-        (singature: any) =>
+-          singature.parameters?.find((p: any) => p.name === "options"),
++        (signature: any) =>
++          signature.parameters?.find((p: any) => p.name === "options"),
+       );
+       const fnArity =
+         ref.fn.signatures?.reduce<number>(
+diff --git a/src/addBusinessDays/test.ts b/src/addBusinessDays/test.ts
+index 036a5a86b7..7d9b988fc0 100644
+--- a/src/addBusinessDays/test.ts
++++ b/src/addBusinessDays/test.ts
+@@ -60,8 +60,8 @@ describe("addBusinessDays", () => {
+   });
+ 
+   it("starting from a weekend day should land on a weekday when reducing a divisible by 5", () => {
+-    const substractResult = addBusinessDays(new Date(2019, 7, 18), -5);
+-    expect(substractResult).toEqual(new Date(2019, 7, 12));
++    const subtractResult = addBusinessDays(new Date(2019, 7, 18), -5);
++    expect(subtractResult).toEqual(new Date(2019, 7, 12));
+ 
+     const subtractResultWeekend = addBusinessDays(new Date(2019, 7, 17), -5);
+     expect(subtractResultWeekend).toEqual(new Date(2019, 7, 12));
+diff --git a/src/constants/index.ts b/src/constants/index.ts
+index 7a61e9b3e9..b46dab73e2 100644
+--- a/src/constants/index.ts
++++ b/src/constants/index.ts
+@@ -32,7 +32,7 @@ export const daysInWeek = 7;
+  *
+  * One years equals 365.2425 days according to the formula:
+  *
+- * > Leap year occurs every 4 years, except for years that are dividable by 100 and not dividable by 400.
++ * > Leap year occurs every 4 years, except for years that are divisible by 100 and not divisible by 400.
+  * > 1 mean year = (365+1/4-1/100+1/400) days = 365.2425 days
+  */
+ export const daysInYear = 365.2425;
+diff --git a/src/eachMinuteOfInterval/test.ts b/src/eachMinuteOfInterval/test.ts
+index da1770f089..bed58f56aa 100644
+--- a/src/eachMinuteOfInterval/test.ts
++++ b/src/eachMinuteOfInterval/test.ts
+@@ -19,7 +19,7 @@ describe("eachMinuteOfInterval", () => {
+     ]);
+   });
+ 
+-  it("should handle all the minutes that are not in the begining", () => {
++  it("should handle all the minutes that are not in the beginning", () => {
+     const result = eachMinuteOfInterval({
+       start: new Date(2020, 10, 14, 13, 0, 33),
+       end: new Date(2020, 10, 14, 13, 2),
+diff --git a/src/format/test.ts b/src/format/test.ts
+index 670999e232..a3efb92ae0 100644
+--- a/src/format/test.ts
++++ b/src/format/test.ts
+@@ -57,7 +57,7 @@ describe("format", () => {
+     expect(format(date, "''h 'o''clock'''")).toBe("'5 o'clock'");
+   });
+ 
+-  it("accepts new line charactor", () => {
++  it("accepts new line character", () => {
+     const date = new Date(2014, 3, 4, 5);
+     expect(format(date, "yyyy-MM-dd'\n'HH:mm:ss")).toBe("2014-04-04\n05:00:00");
+   });
+diff --git a/src/fp/_lib/convertToFP/test.ts b/src/fp/_lib/convertToFP/test.ts
+index 6a82e4ac8d..7be43b6d0b 100644
+--- a/src/fp/_lib/convertToFP/test.ts
++++ b/src/fp/_lib/convertToFP/test.ts
+@@ -1,6 +1,6 @@
+ import { pipe } from "fp-ts/function";
+ import { flow as jsFnsFlow } from "js-fns";
+-// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- Lodash types trip in different environemnts, so we can't put ts-expect-error
++// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- Lodash types trip in different environments, so we can't put ts-expect-error
+ // @ts-ignore - Lodash types are tripping ("Module '"lodash"' has no exported member 'flow'.ts(2305)")
+ import { flow as lodashFlow } from "lodash";
+ import { describe, expect, it } from "vitest";
+diff --git a/src/getOverlappingDaysInIntervals/test.ts b/src/getOverlappingDaysInIntervals/test.ts
+index 532e4ddfd0..8e6df50e3d 100644
+--- a/src/getOverlappingDaysInIntervals/test.ts
++++ b/src/getOverlappingDaysInIntervals/test.ts
+@@ -137,7 +137,7 @@ describe("getOverlappingDaysInIntervals", () => {
+       expect(numOverlappingDays).toBe(24);
+     });
+ 
+-    it("considers equal 0-lenght intervals not overlapping", () => {
++    it("considers equal 0-length intervals not overlapping", () => {
+       const date = new Date(2016, 10, 15);
+       const numOverlappingDays = getOverlappingDaysInIntervals(
+         { start: date, end: date },
+diff --git a/src/isMatch/index.ts b/src/isMatch/index.ts
+index c472e1b915..757d175c9b 100644
+--- a/src/isMatch/index.ts
++++ b/src/isMatch/index.ts
+@@ -202,7 +202,7 @@ export interface IsMatchOptions
+  *
+  *    `format(new Date(2017, 10, 6), 'do MMMM', {locale: cs}) //=> '6. listopadu'`
+  *
+- *    `isMatch` will try to match both formatting and stand-alone units interchangably.
++ *    `isMatch` will try to match both formatting and stand-alone units interchangeably.
+  *
+  * 2. Any sequence of the identical letters is a pattern, unless it is escaped by
+  *    the single quote characters (see below).
+diff --git a/src/lightFormat/test.ts b/src/lightFormat/test.ts
+index 1dd565bad5..d36ef7e3e6 100644
+--- a/src/lightFormat/test.ts
++++ b/src/lightFormat/test.ts
+@@ -19,7 +19,7 @@ describe("lightFormat", () => {
+     expect(lightFormat(date, "''h 'o''clock'''")).toBe("'5 o'clock'");
+   });
+ 
+-  it("accepts new line charactor", () => {
++  it("accepts new line character", () => {
+     const date = new Date(2014, 3, 4, 5);
+     expect(lightFormat(date, "yyyy-MM-dd'\n'HH:mm:ss")).toBe("2014-04-04\n05:00:00");
+   });
+diff --git a/src/locale/_lib/buildMatchFn/index.ts b/src/locale/_lib/buildMatchFn/index.ts
+index c7cfe03923..63ab995b60 100644
+--- a/src/locale/_lib/buildMatchFn/index.ts
++++ b/src/locale/_lib/buildMatchFn/index.ts
+@@ -90,7 +90,7 @@ export function buildMatchFn<
+     const key = (
+       Array.isArray(parsePatterns)
+         ? findIndex(parsePatterns, (pattern) => pattern.test(matchedString))
+-        : // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challange you to fix the type
++        : // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challenge you to fix the type
+           findKey(parsePatterns, (pattern: any) => pattern.test(matchedString))
+     ) as Value extends LocaleDayPeriod ? string : number;
+ 
+@@ -98,7 +98,7 @@ export function buildMatchFn<
+ 
+     value = (args.valueCallback ? args.valueCallback(key) : key) as Value;
+     value = options.valueCallback
+-      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challange you to fix the type
++      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challenge you to fix the type
+         options.valueCallback(value as any)
+       : value;
+ 
+diff --git a/src/locale/_lib/buildMatchPatternFn/index.ts b/src/locale/_lib/buildMatchPatternFn/index.ts
+index b35272a2e2..51be6f1373 100644
+--- a/src/locale/_lib/buildMatchPatternFn/index.ts
++++ b/src/locale/_lib/buildMatchPatternFn/index.ts
+@@ -19,7 +19,7 @@ export function buildMatchPatternFn<Result>(
+     let value = (
+       args.valueCallback ? args.valueCallback(parseResult[0]) : parseResult[0]
+     ) as Result;
+-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challange you to fix the type
++    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challenge you to fix the type
+     value = options.valueCallback ? options.valueCallback(value as any) : value;
+ 
+     const rest = string.slice(matchedString.length);
+diff --git a/src/locale/types.ts b/src/locale/types.ts
+index 89b061beda..031f6bf8c1 100644
+--- a/src/locale/types.ts
++++ b/src/locale/types.ts
+@@ -372,7 +372,7 @@ export type LocaleUnitValue = Era | Quarter | Month | Day | LocaleDayPeriod;
+ 
+ /**
+  * The format width. Defines how short or long the formatted string might be.
+- * The actaul result length depends on the locale.
++ * The actual result length depends on the locale.
+  */
+ export type LocaleWidth = "narrow" | "short" | "abbreviated" | "wide" | "any";
+ 
+diff --git a/src/parse/index.ts b/src/parse/index.ts
+index 19ebf79ec1..5f550d2965 100644
+--- a/src/parse/index.ts
++++ b/src/parse/index.ts
+@@ -241,7 +241,7 @@ const unescapedLatinCharacterRegExp = /[a-zA-Z]/;
+  *
+  *    `format(new Date(2017, 10, 6), 'do MMMM', {locale: cs}) //=> '6. listopadu'`
+  *
+- *    `parse` will try to match both formatting and stand-alone units interchangably.
++ *    `parse` will try to match both formatting and stand-alone units interchangeably.
+  *
+  * 2. Any sequence of the identical letters is a pattern, unless it is escaped by
+  *    the single quote characters (see below).
+diff --git a/src/parse/test.ts b/src/parse/test.ts
+index 12800656b6..ad0f6fed1c 100644
+--- a/src/parse/test.ts
++++ b/src/parse/test.ts
+@@ -18,7 +18,7 @@ describe("parse", () => {
+     expect(result).toEqual(new Date(1986, 3 /* Apr */, 4, 5));
+   });
+ 
+-  it("accepts new line charactor", () => {
++  it("accepts new line character", () => {
+     const result = parse(
+       "2014-04-04\n05:00:00",
+       "yyyy-MM-dd'\n'HH:mm:ss",
+diff --git a/src/parseJSON/test.ts b/src/parseJSON/test.ts
+index 20f27b47d2..53adb664d4 100644
+--- a/src/parseJSON/test.ts
++++ b/src/parseJSON/test.ts
+@@ -31,7 +31,7 @@ describe("parseJSON", () => {
+     expect(parsedDate.toISOString()).toBe(expectedDate.toISOString());
+   });
+ 
+-  it("parses a formatted Indian Standart Time in Asia/Kolkata with +5:30 hours of offset back to UTC - issue 2149", () => {
++  it("parses a formatted Indian Standard Time in Asia/Kolkata with +5:30 hours of offset back to UTC - issue 2149", () => {
+     const date = "2021-02-15T02:56:04.678+05:30";
+     const expectedDate = new Date("2021-02-14T21:26:04.678Z");
+     const parsedDate = parseJSON(date);
+diff --git a/src/roundToNearestHours/test.ts b/src/roundToNearestHours/test.ts
+index 4a8bd39def..c25a01f9cb 100644
+--- a/src/roundToNearestHours/test.ts
++++ b/src/roundToNearestHours/test.ts
+@@ -153,7 +153,7 @@ describe("roundToNearestHours", () => {
+     });
+ 
+     it("ceils correctly with 0 seconds and 1 millisecond", () => {
+-      // "ceil" does not round up when exactly oclock
++      // "ceil" does not round up when exactly o'clock
+       expect(roundToNearestHours(makeDate(15, 0, 0, 0), { roundingMethod: "ceil" })).toEqual(makeDate(15));
+ 
+       expect(roundToNearestHours(makeDate(15, 0, 0, 1), { roundingMethod: "ceil" })).toEqual(makeDate(16));
+diff --git a/src/setDefaultOptions/index.ts b/src/setDefaultOptions/index.ts
+index 8be11fc688..0756a5f6e1 100644
+--- a/src/setDefaultOptions/index.ts
++++ b/src/setDefaultOptions/index.ts
+@@ -56,7 +56,7 @@ export function setDefaultOptions(options: DefaultOptions): void {
+ 
+   for (const property in defaultOptions) {
+     if (Object.prototype.hasOwnProperty.call(defaultOptions, property)) {
+-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challange you to fix the type
++      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challenge you to fix the type
+       (result as any)[property] =
+         defaultOptions[property as keyof DefaultOptions];
+     }
+@@ -65,10 +65,10 @@ export function setDefaultOptions(options: DefaultOptions): void {
+   for (const property in options) {
+     if (Object.prototype.hasOwnProperty.call(options, property)) {
+       if (options[property as keyof DefaultOptions] === undefined) {
+-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challange you to fix the type
++        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challenge you to fix the type
+         delete (result as any)[property];
+       } else {
+-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challange you to fix the type
++        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- I challenge you to fix the type
+         (result as any)[property] = options[property as keyof DefaultOptions];
+       }
+     }
+diff --git a/src/startOfToday/test.ts b/src/startOfToday/test.ts
+index 47c55b820f..c40d112c4a 100644
+--- a/src/startOfToday/test.ts
++++ b/src/startOfToday/test.ts
+@@ -14,7 +14,7 @@ describe("startOfToday", () => {
+     clock.restore();
+   });
+ 
+-  it("returns the current date with the time setted to 00:00:00", () => {
++  it("returns the current date with the time set to 00:00:00", () => {
+     const result = startOfToday();
+     expect(result).toEqual(new Date(2014, 8 /* Sep */, 25));
+   });
+diff --git a/src/subBusinessDays/test.ts b/src/subBusinessDays/test.ts
+index cc62756fb2..7ea3f92302 100644
+--- a/src/subBusinessDays/test.ts
++++ b/src/subBusinessDays/test.ts
+@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
+ import { subBusinessDays } from "./index.js";
+ 
+ describe("subBusinessDays", () => {
+-  it("substract the given number of business days", () => {
++  it("subtract the given number of business days", () => {
+     const result = subBusinessDays(new Date(2014, 8 /* Sep */, 1), 10);
+     expect(result).toEqual(new Date(2014, 7 /* Aug */, 18));
+   });
+diff --git a/test/dst/tzOffsetTransitions.ts b/test/dst/tzOffsetTransitions.ts
+index 7f346d7523..78210bffeb 100644
+--- a/test/dst/tzOffsetTransitions.ts
++++ b/test/dst/tzOffsetTransitions.ts
+@@ -79,12 +79,12 @@ function previousTickTimezoneOffset(date: Date): number {
+  *   when the new timezone offset is effective.
+  * - `type` - either `forward` for skippnig time like
+  *   the Spring transition to DST.
+- * - `before` - the timezone offset before the tranition.
++ * - `before` - the timezone offset before the transition.
+  *   For example, the UTC-0400 offset will return -240.
+  *   To match how times are displayed in ISO 8601 format,
+  *   the sign of this value is reversed from the return
+  *   value of `Date.getTimezoneOffset`.
+- * - `after` - the timezone offset after the tranition.
++ * - `after` - the timezone offset after the transition.
+  *   Examples and caveats are the same as `before`.
+ 
+  */
