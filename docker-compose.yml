@@ -16,3 +16,5 @@ services:
     # document this as a known boundary in your architecture write-up.
     network_mode: "bridge"
     read_only: false   # set true later once you confirm what needs write access
+    tty: true
+    stdin_open: true
