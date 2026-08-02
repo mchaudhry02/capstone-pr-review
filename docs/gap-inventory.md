@@ -8,7 +8,7 @@ Status of required artifacts as of completing Workstream 1.
 | Containerized agent harness | Started (Dockerfile, docker-compose.yml, .env.example, .dockerignore) |
 | PRD | Done (`docs/prd.md`) |
 | Quality rubric with thresholds | Done (`docs/quality-rubric.md`) |
-| Baseline measurements | Plan written (`docs/baseline-metrics.md`); **actual baseline run not yet performed — GAP** |
+| Baseline measurements | **Done** — real baseline run completed (`docs/baseline-metrics.md`, raw data in `docs/baseline-run-notes.md`): 3/3 seeded bugs caught, 5 min avg review time, 75% avg quality score, $6.25 avg cost per review |
 | Iteration log | Started (`docs/iteration-log.md`) |
 
 ## Module 2 (Agents, skills, memory, reflection)
@@ -39,8 +39,6 @@ Status of required artifacts as of completing Workstream 1.
 | Deterministic conversion + ADR | Not started — GAP |
 
 ## Immediate Next Actions (in priority order)
-1. Run the manual baseline pass using `docs/baseline-metrics.md` plan —
-   closes the last Workstream 1 gap
-2. Finish README with a 15-minute fork-and-run path (Workstream 2)
-3. Define and version the first agent + 2 skills (Workstream 2)
-4. Move into Workstream 3: orchestrator + subagents
+1. Finish README with a 15-minute fork-and-run path (Workstream 2)
+2. Define and version the first agent + 2 skills (Workstream 2)
+3. Move into Workstream 3: orchestrator + subagents
