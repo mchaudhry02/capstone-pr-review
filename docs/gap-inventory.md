@@ -14,10 +14,10 @@ Status of required artifacts as of completing Workstream 1.
 ## Module 2 (Agents, skills, memory, reflection)
 | Artifact | Status |
 |---|---|
-| Versioned agent definitions | Not started — GAP |
-| Versioned skills (2+) | Not started — GAP |
-| Persistent memory layout | Not started — GAP |
-| Reflection log | Not started — GAP |
+| Versioned agent definitions | **Done** — 3 agents: `agents/planner.md`, `agents/reviewer.md`, `agents/release-manager.md` |
+| Versioned skills (2+) | **Done** — `skills/diff-parsing.md`, `skills/risk-scoring.md` |
+| Persistent memory layout | **Done** — `memory/architecture-notes.md`, `memory/store/*.jsonl` |
+| Reflection log | **Done** — `memory/reflection-log.md`, 2 concrete entries tying observations to real changes made |
 
 ## Module 3 (Orchestration, MCP, retrieval, evals)
 | Artifact | Status |
