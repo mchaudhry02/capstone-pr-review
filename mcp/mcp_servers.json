@@ -1,0 +1,36 @@
+{
+  "_comment": "MCP server registration for the PR-review pipeline. Follows the same shape as Claude Code's .mcp.json (mcpServers: {name: {command, args, env}}) so it can be dropped in directly as .mcp.json at the repo root, or referenced from docker-compose. Both servers are spawned as local stdio subprocesses inside the agent-harness container -- no additional network egress required (see docker/docker-compose.yml network_mode notes).",
+  "mcpServers": {
+    "pr-review-storage": {
+      "command": "python3",
+      "args": ["mcp/storage_server.py"],
+      "env": {},
+      "description": "Persistent memory: review-history.jsonl, calibration-log.jsonl. Classification: internal. See docs/mcp-configuration.md."
+    },
+    "pr-review-retrieval": {
+      "command": "python3",
+      "args": ["mcp/retrieval_server.py"],
+      "env": {},
+      "description": "Vector retrieval over data/*.diff (TF-IDF, local/offline). Classification: public. See docs/mcp-configuration.md."
+    }
+  },
+  "_role_tool_allowlist": {
+    "_comment": "Enforceable version of docs/orchestration-diagram.md's Routing-and-Tool-Grant Map. Each server also enforces this same mapping independently in its own TOOL_GRANTS dict (mcp/storage_server.py, mcp/retrieval_server.py) via an optional _caller_role argument passed with every tools/call -- so the boundary holds even if the orchestrator config below is bypassed or misconfigured. Full CI-enforced policy testing is Workstream 4; this is the config both that work and today's agents rely on.",
+    "orchestrator": {
+      "pr-review-storage": ["get_review_history", "put_review_record", "get_calibration_log"],
+      "pr-review-retrieval": ["search_context", "index_stats"]
+    },
+    "planner": {
+      "pr-review-storage": ["get_review_history", "get_calibration_log"],
+      "pr-review-retrieval": ["search_context", "index_stats"]
+    },
+    "reviewer": {
+      "pr-review-storage": ["get_review_history", "get_calibration_log"],
+      "pr-review-retrieval": ["search_context", "index_stats"]
+    },
+    "release-manager": {
+      "pr-review-storage": [],
+      "pr-review-retrieval": []
+    }
+  }
+}
