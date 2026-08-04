@@ -1,0 +1,3 @@
+{"pr_id": "pr-688", "date": "2026-08-02", "findings_summary": "Math.min/max swap breaks FORCE_COLOR clamping", "overall_risk_score": "medium", "outcome": "request_changes"}
+{"pr_id": "pr-569", "date": "2026-08-02", "findings_summary": "Dropped modifierNames export during refactor, not caught by test suite", "overall_risk_score": "medium", "outcome": "request_changes"}
+{"pr_id": "pr-4179", "date": "2026-08-02", "findings_summary": "Missing regex alternation pipe breaks German month matching", "overall_risk_score": "medium", "outcome": "request_changes"}
