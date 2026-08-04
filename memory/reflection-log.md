@@ -38,6 +38,35 @@ should specifically check "did every previously-exported symbol survive
 the move," rather than trusting a passing test suite as sufficient
 evidence of correctness.
 
+## 2026-08-04: Retrieval smoke test exposed a vocabulary-mismatch gap -> title-weighting fix
+
+**Observation:** Once `mcp/retrieval_server.py` was built and run against
+the 6 ground-truth retrieval queries in `data/seeded bugs/ground-truth.md`,
+it scored 4/6 on first pass. Two misses: the "ansi-styles exports /
+modifierNames" query ranked pr-569 below the relevance threshold because
+generic diff-body vocabulary diluted the one specific matching term; the
+"German locale month name" query missed pr-4179 entirely because the
+query's words ("German", "month") never literally appear in the diff or
+PR title (which says "de-AT" and "Jänner" instead).
+
+**Change made:** Weighted PR title 3x relative to diff body in the TF-IDF
+index and enabled sublinear TF scaling (see calibration-log.jsonl,
+2026-08-04 entry). This is a principled fix, not query-specific tuning —
+title is the clearest intent signal for any query, not just these two.
+
+**Result:** Recovered the modifierNames miss (5/6 after the fix). The
+pr-4179 miss remains — it's a genuine vocabulary-mismatch limitation of
+lexical (TF-IDF) search, not something title-weighting can fix, since the
+missing words never appear anywhere in the indexed text at all.
+
+**Expected effect / open item:** In the real-deployment path this would
+likely need either (a) a small domain-alias table (e.g. "de-AT" <->
+"German", locale codes <-> language names) as a deterministic pre-processing
+step, or (b) semantic embeddings instead of pure lexical TF-IDF — both are
+right-tool candidates worth evaluating in Workstream 5. Documented as a
+known limitation in `docs/mcp-configuration.md` rather than silently
+left unaddressed.
+
 ## [Planned] Next reflection point
 Once the reviewer agent is actually running (Workstream 3), compare its
 real findings against `data/seeded-bugs/ground-truth.md` and log whether
