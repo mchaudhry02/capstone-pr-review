@@ -1,0 +1,1 @@
+{"date": "2026-08-02", "change": "Added risk-scoring skill with rule-based severity mapping", "reason": "Baseline review scored 1/2 on Risk Flagging across all seeded-bug PRs", "evidence_source": "docs/baseline-metrics.md"}
