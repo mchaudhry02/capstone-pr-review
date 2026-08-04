@@ -1,1 +1,146 @@
-# capstone-pr-review
+# Agentic PR Review & Release Notes Pipeline
+
+A forkable, governed, multi-agent pipeline that reviews pull requests,
+catches issues human reviewers might miss, and drafts release notes —
+built as a capstone project demonstrating safe, governed agentic
+engineering.
+
+## What this does
+
+Given a PR diff, this pipeline:
+1. Delegates to specialized subagents (planner, implementer, reviewer,
+   release-manager) to analyze the change
+2. Produces a structured review with a risk score
+3. Flags high-risk changes (security issues, silently dropped exports,
+   broken logic) for human escalation instead of auto-approving
+4. Drafts a release-note line for the change
+   See `docs/prd.md` for the full problem statement, stakeholder, and
+   acceptance criteria.
+
+## Status
+
+This is an active capstone project. Current status: Workstream 1
+(scoping, baseline, ground-truth data) is complete. See
+`docs/gap-inventory.md` for what's built vs. in progress.
+
+## Quick Start (fork-and-run in under 15 minutes)
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- [GitHub CLI](https://cli.github.com/) installed and authenticated (`gh auth login`)
+- An Anthropic API key (or your chosen agent runtime's equivalent)
+### 1. Clone this repo
+```bash
+git clone <this-repo-url>
+cd capstone-pr-review
+```
+
+### 2. Set up your environment
+```bash
+cp .env.example .env
+```
+Open `.env` and fill in your actual API key. **Never commit this file.**
+
+### 3. Build and start the containerized harness
+```bash
+docker compose build
+docker compose up -d
+```
+
+### 4. Enter the container
+```bash
+docker exec -it pr-review-agent bash
+```
+
+### 5. Pull sample PR data (optional — sample data is already included)
+```bash
+./fetch-prs.sh chalk/chalk 25
+```
+
+### 6. Run the pipeline against a sample PR
+```bash
+# (Command will be added once the orchestrator is built in Workstream 3)
+```
+
+### 7. When done
+```bash
+exit
+docker compose down
+```
+
+## Repository Structure
+
+```
+.
+├── .idea
+├── agents/                  # Versioned agent definitions (reviewer.md, etc.)
+│   ├── planner.md              # Routes PR to subagents, retrieves 
+    ├──release-manager.md     # Draft-only release note agent, wired to reviewer's severity output
+    └── reviewer.md            # Read-only PR review agent, scores findings against quality-rubric.md
+├── chalk/                   # Local clone of chalk/chalk used for applying/testing seeded bugs
+│                              # (not committed — used locally to verify ground-truth data;
+│                              # add to .gitignore)
+├── data/
+│   ├── pr-list.json          # Pulled PR metadata
+│   ├── pr-*.diff              # Real PR diffs (clean samples)
+│   └── seeded-bugs/
+│       ├── ground-truth.md       # Documented seeded bugs and expected findings
+│       └── pr-*-SEEDED-BUG.diff  # PR diffs with intentional bugs introduced
+├── docker/
+│   ├── .dockerignore
+│   ├──.env.example         # Template for required secrets (never commit .env)
+│   ├── Dockerfile           # Containerized agent harness
+│   └── docker-compose.yml   # Filesystem/network/credential boundaries
+├── docs/
+│   ├── prd.md                # Problem statement, stakeholder, acceptance criteria
+│   ├── quality-rubric.md     # Scoring rubric with pass/fail thresholds
+│   ├── baseline-metrics.md   # Pre-agent baseline results
+│   ├── baseline-run-notes.md # Raw baseline review data
+│   ├── iteration-log.md      # Chronological decision log
+│   └── gap-inventory.md      # What's built vs. in progress
+├── evals/                   # Evaluation harness, holdout set, calibration log (Workstream 4 — in progress)
+├── memory/                 
+│   └── store/
+│       ├── review-history.jsonl    # Past PR review outcomes
+│       └── calibration-log.jsonl   # Logged changes made because of evidence
+│   ├── architecture-notes.md   # Memory vs. context vs. prompt design, storage format
+│   ├── reflection-log.md       # Concrete updates made based on observed results
+├── skills/                  
+│   ├── diff-parsing.md      # Shared diff-parsing logic used by planner + reviewer
+│   └── risk-scoring.md      # Deterministic severity/recommendation scoring, fixes baseline's Risk Flagging gap
+├── workspace/                # Mounted working directory for the agent harness at runtime
+├── fetch-prs.sh             # Pulls sample PR data from GitHub
+└── README.md
+```
+
+## Delivery Path
+
+This project uses the **job-seeker / no-deployment path**: it runs against
+public, representative data (real merged PRs from chalk/chalk and
+date-fns/date-fns) rather than live production traffic. In a real
+deployment, this would instead trigger on live GitHub webhooks against a
+team's actual repository, with scoped write access and secrets pulled
+from a vault rather than a local `.env` file.
+
+## Ground-Truth Evaluation Data
+
+Three seeded bugs, each based on a real merged PR with one intentional
+issue introduced, are documented in `data/seeded-bugs/ground-truth.md`:
+
+- **pr-688**: A `Math.min`/`Math.max` swap breaking `FORCE_COLOR`
+  clamping — confirmed caught by the existing test suite
+- **pr-569**: A silently dropped `modifierNames` export — confirmed
+  **not** caught by the existing test suite, demonstrating a bug class
+  only a reviewing agent (or human) catches
+- **pr-4179**: A missing regex alternation pipe breaking German
+  month-name matching
+## Baseline (Pre-Agent) Results
+
+See `docs/baseline-metrics.md` for full results. Summary: manual review
+caught 3/3 seeded bugs, averaging 5 minutes and a 75% quality score per
+review, at an estimated $6.25 cost per review. The agentic pipeline's
+results will be compared against this baseline once built.
+
+## License
+
+TBD
