@@ -22,11 +22,11 @@ Status of required artifacts as of completing Workstream 1.
 ## Module 3 (Orchestration, MCP, retrieval, evals)
 | Artifact | Status |
 |---|---|
-| Orchestration diagram | Not started — GAP |
-| Routing-and-tool-grant map | Not started — GAP |
-| MCP configuration | Not started — GAP |
-| Ground-truth retrieval set | Partially done — 3 seeded-bug PRs with documented expected findings (`data/seeded-bugs/ground-truth.md`); need 1-2 more, plus this needs to be reframed/extended for retrieval-specific testing (not just bug detection) |
-| Retrieval quality report | Not started — GAP |
+| Orchestration diagram | **Done** — `docs/orchestration-diagram.md` |
+| Routing-and-tool-grant map | **Done** — `docs/orchestration-diagram.md`, enforced in `mcp/mcp_servers.json` + both MCP servers' `TOOL_GRANTS` |
+| MCP configuration | **Done** — `mcp/storage_server.py`, `mcp/retrieval_server.py`, `mcp/mcp_servers.json`, documented in `docs/mcp-configuration.md` |
+| Ground-truth retrieval set | Done — 6 queries in `data/seeded bugs/ground-truth.md`'s "Retrieval Ground Truth Set", including 1 negative/false-positive case |
+| Retrieval quality report | Partially done — smoke test in `docs/mcp-configuration.md` (5/6 hit, 1 documented open limitation); still needs a wider query set for a formal report — GAP |
 | Evaluation harness | Not started — GAP |
 
 ## Module 4 (Governance, CI/CD, ADRs, conversion)
