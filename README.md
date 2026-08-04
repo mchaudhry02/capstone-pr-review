@@ -98,7 +98,11 @@ docker compose down
 │   ├── baseline-run-notes.md # Raw baseline review data
 │   ├── iteration-log.md      # Chronological decision log
 │   └── gap-inventory.md      # What's built vs. in progress
-├── evals/                   # Evaluation harness, holdout set, calibration log (Workstream 4 — in progress)
+├── evals/                   # Evaluation harness, holdout set (Workstream 4 — in progress)
+├── mcp/                     # MCP configuration (Workstream 3)
+│   ├── storage_server.py       # Persistent-memory MCP server (schema-validated)
+│   ├── retrieval_server.py     # Vector retrieval MCP server (TF-IDF over data/*.diff)
+│   └── mcp_servers.json        # Server registration + role-to-tool allow-list
 ├── memory/                 
 │   └── store/
 │       ├── review-history.jsonl    # Past PR review outcomes
@@ -111,7 +115,6 @@ docker compose down
 ├── workspace/                # Mounted working directory for the agent harness at runtime
 ├── fetch-prs.sh             # Pulls sample PR data from GitHub
 └── README.md
-```
 
 ## Delivery Path
 
