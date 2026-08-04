@@ -1,7 +1,13 @@
 FROM node:20-slim
 
-# Install git (needed to read PR diffs / clone repo history)
-RUN apt-get update && apt-get install -y git curl && rm -rf /var/lib/apt/lists/*
+# Install git (needed to read PR diffs / clone repo history) and Python 3
+# (needed to run the MCP servers under mcp/ -- storage_server.py and
+# retrieval_server.py -- see docs/mcp-configuration.md)
+RUN apt-get update && apt-get install -y git curl python3 python3-pip && rm -rf /var/lib/apt/lists/*
+
+# Retrieval server uses scikit-learn (TF-IDF + cosine similarity) for
+# local, offline vector search -- no external embeddings API required.
+RUN pip install --break-system-packages --no-cache-dir scikit-learn numpy
 
 # Install the agent runtime CLI (Claude Code)
 RUN npm install -g @anthropic-ai/claude-code
