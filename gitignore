@@ -1,0 +1,59 @@
+# === Secrets — never commit these ===
+.env
+docker/.env
+*.env.local
+
+# === IDE / editor settings ===
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# === Cloned external repos used only for local verification ===
+# (chalk/ is a full clone of chalk/chalk used to apply/test seeded bugs —
+# not part of this project's own code, should never be committed)
+chalk/
+date-fns/
+
+# === Node.js ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+venv/
+.venv/
+
+# === Docker ===
+*.pid
+
+# === Logs ===
+*.log
+logs/
+
+# === OS junk ===
+Thumbs.db
+desktop.ini
+
+# === Build / dist artifacts (if any get generated later) ===
+dist/
+build/
+*.tsbuildinfo
+
+# === Temporary / scratch files ===
+*.tmp
+*.bak
+.scratch/
+
+# === Workspace mount (runtime output, not source) ===
+workspace/*
+!workspace/.gitkeep
