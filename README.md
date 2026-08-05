@@ -72,14 +72,12 @@ docker compose down
 
 ```
 .
-├── .idea
-├── agents/                  # Versioned agent definitions (reviewer.md, etc.)
-│   ├── planner.md              # Routes PR to subagents, retrieves 
-    ├──release-manager.md     # Draft-only release note agent, wired to reviewer's severity output
-    └── reviewer.md            # Read-only PR review agent, scores findings against quality-rubric.md
-├── chalk/                   # Local clone of chalk/chalk used for applying/testing seeded bugs
-│                              # (not committed — used locally to verify ground-truth data;
-│                              # add to .gitignore)
+├── .idea/                    # JetBrains IDE settings (gitignored)
+├── agents/
+│   ├── planner.md              # Routes PR to subagents, retrieves context, no review authority
+│   ├── reviewer.md            # Read-only PR review agent, scores findings against quality-rubric.md
+│   └── release-manager.md     # Draft-only release note agent, wired to reviewer's severity output
+├── chalk/                    # Local clone of chalk/chalk, used to apply/test seeded bugs (gitignored)
 ├── data/
 │   ├── pr-list.json          # Pulled PR metadata
 │   ├── pr-*.diff              # Real PR diffs (clean samples)
@@ -87,33 +85,41 @@ docker compose down
 │       ├── ground-truth.md       # Documented seeded bugs and expected findings
 │       └── pr-*-SEEDED-BUG.diff  # PR diffs with intentional bugs introduced
 ├── docker/
-│   ├── .dockerignore
-│   ├──.env.example         # Template for required secrets (never commit .env)
 │   ├── Dockerfile           # Containerized agent harness
-│   └── docker-compose.yml   # Filesystem/network/credential boundaries
+│   ├── docker-compose.yml   # Filesystem/network/credential boundaries
+│   └── .env.example         # Template for required secrets (never commit .env)
 ├── docs/
-│   ├── prd.md                # Problem statement, stakeholder, acceptance criteria
-│   ├── quality-rubric.md     # Scoring rubric with pass/fail thresholds
-│   ├── baseline-metrics.md   # Pre-agent baseline results
-│   ├── baseline-run-notes.md # Raw baseline review data
-│   ├── iteration-log.md      # Chronological decision log
-│   └── gap-inventory.md      # What's built vs. in progress
-├── evals/                   # Evaluation harness, holdout set (Workstream 4 — in progress)
-├── mcp/                     # MCP configuration (Workstream 3)
-│   ├── storage_server.py       # Persistent-memory MCP server (schema-validated)
-│   ├── retrieval_server.py     # Vector retrieval MCP server (TF-IDF over data/*.diff)
-│   └── mcp_servers.json        # Server registration + role-to-tool allow-list
-├── memory/                 
-│   └── store/
-│       ├── review-history.jsonl    # Past PR review outcomes
-│       └── calibration-log.jsonl   # Logged changes made because of evidence
+│   ├── prd.md                       # Problem statement, stakeholder, acceptance criteria
+│   ├── quality-rubric.md            # Scoring rubric with pass/fail thresholds
+│   ├── baseline-metrics.md          # Pre-agent baseline results
+│   ├── baseline-run-notes.md        # Raw baseline review data
+│   ├── iteration-log.md             # Chronological decision log
+│   ├── gap-inventory.md             # What's built vs. in progress
+│   ├── orchestration-diagram.md     # Mermaid flowchart + routing-and-tool-grant map
+│   └── retrieval-quality-report.md  # Real results from the MCP retrieval server
+├── evals/
+│   ├── holdout-set.md           # Calibration vs. holdout PR split
+│   ├── evaluation-harness.md    # Deterministic checks + rubric scoring design
+│   ├── run_eval.py              # Runnable deterministic-check script
+│   ├── eval-results.jsonl       # Logged eval run results
+│   └── sample-runs/             # Example agent outputs used to test the harness (not real agent output — see sample-runs/README.md)
+├── mcp/
+│   ├── storage_server.py       # Persistent memory MCP server (review history, calibration log)
+│   └── retrieval_server.py     # TF-IDF retrieval MCP server over data/*.diff
+├── memory/
 │   ├── architecture-notes.md   # Memory vs. context vs. prompt design, storage format
 │   ├── reflection-log.md       # Concrete updates made based on observed results
-├── skills/                  
-│   ├── diff-parsing.md      # Shared diff-parsing logic used by planner + reviewer
-│   └── risk-scoring.md      # Deterministic severity/recommendation scoring, fixes baseline's Risk Flagging gap
+│   └── store/
+│       ├── review-history.jsonl        # Past PR review outcomes
+│       ├── calibration-log.jsonl       # Logged changes made because of evidence
+│       └── calibration-proposals.jsonl # Agent-proposed changes awaiting human promotion
+├── skills/
+│   ├── diff-parsing.md         # Shared diff-parsing logic used by planner + reviewer
+│   └── risk-scoring.md         # Deterministic severity/recommendation scoring, fixes baseline's Risk Flagging gap
 ├── workspace/                # Mounted working directory for the agent harness at runtime
-├── fetch-prs.sh             # Pulls sample PR data from GitHub
+├── .gitignore                 # Excludes secrets, IDE files, cloned repos (chalk/), node_modules, etc.
+├── .mcp.json                  # MCP server registration (storage + retrieval)
+├── fetch-prs.sh               # Pulls sample PR data from GitHub
 └── README.md
 
 ## Delivery Path
