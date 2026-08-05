@@ -1,0 +1,2 @@
+{"pr_id": "pr-4179", "date": "2026-08-02", "set": "holdout", "deterministic_checks": {"schema_validity": "PASS", "grounding": "PASS", "recommendation_consistency": "PASS", "seeded_bug_caught": "PASS"}, "overall": "PASS"}
+{"pr_id": "pr-653", "date": "2026-08-02", "set": "holdout", "deterministic_checks": {"schema_validity": "PASS", "grounding": "PASS", "recommendation_consistency": "PASS", "clean_pr_no_false_positives": "PASS"}, "overall": "PASS"}
