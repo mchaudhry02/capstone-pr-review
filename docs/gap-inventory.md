@@ -22,12 +22,12 @@ Status of required artifacts as of completing Workstream 1.
 ## Module 3 (Orchestration, MCP, retrieval, evals)
 | Artifact | Status |
 |---|---|
-| Orchestration diagram | **Done** — `docs/orchestration-diagram.md` |
-| Routing-and-tool-grant map | **Done** — `docs/orchestration-diagram.md`, enforced in `mcp/mcp_servers.json` + both MCP servers' `TOOL_GRANTS` |
-| MCP configuration | **Done** — `mcp/storage_server.py`, `mcp/retrieval_server.py`, `mcp/mcp_servers.json`, documented in `docs/mcp-configuration.md` |
-| Ground-truth retrieval set | Done — 6 queries in `data/seeded bugs/ground-truth.md`'s "Retrieval Ground Truth Set", including 1 negative/false-positive case |
-| Retrieval quality report | Partially done — smoke test in `docs/mcp-configuration.md` (5/6 hit, 1 documented open limitation); still needs a wider query set for a formal report — GAP |
-| Evaluation harness | Not started — GAP |
+| Orchestration diagram | **Done** — `docs/orchestration-diagram.md`, Mermaid flowchart + routing rules |
+| Routing-and-tool-grant map | **Done** — table in `docs/orchestration-diagram.md`, independently enforced server-side in both `mcp/storage_server.py` and `mcp/retrieval_server.py`'s `TOOL_GRANTS` |
+| MCP configuration | **Done** — `.mcp.json`, `mcp/storage_server.py` (persistent memory, schema-validated), `mcp/retrieval_server.py` (TF-IDF retrieval, explicit relevance floor) |
+| Ground-truth retrieval set | **Done** — 6 retrieval test cases (5 positive, 1 negative) in `data/seeded-bugs/ground-truth.md`, separate from the 3-entry bug-detection ground truth |
+| Retrieval quality report | **Done** — `docs/retrieval-quality-report.md`, real results from running the actual retrieval server: 4/6 hit, 1 confirmed miss, 1 confirmed false positive (logged as a calibration proposal) |
+| Evaluation harness | **Done** — `evals/evaluation-harness.md` (design), `evals/run_eval.py` (runnable, tested), `evals/holdout-set.md` (calibration vs. holdout split), `evals/eval-results.jsonl` (logged results) |
 
 ## Module 4 (Governance, CI/CD, ADRs, conversion)
 | Artifact | Status |
@@ -38,7 +38,21 @@ Status of required artifacts as of completing Workstream 1.
 | Audit log template | Not started — GAP |
 | Deterministic conversion + ADR | Not started — GAP |
 
+## Known Remaining Gap in Module 3
+
+Agent definitions (`agents/*.md`), skills, and MCP servers all exist and
+are individually tested, but there is **no actual orchestrator code**
+wiring them together into a runnable end-to-end pipeline yet — running
+a real PR through planner -> reviewer -> release-manager automatically
+is still to be built. This is why `evals/sample-runs/` outputs are
+explicitly marked as hand-crafted rather than real agent output. Building
+this end-to-end wiring is required before Workstream 6's production-like
+integration run.
+
 ## Immediate Next Actions (in priority order)
-1. Finish README with a 15-minute fork-and-run path (Workstream 2)
-2. Define and version the first agent + 2 skills (Workstream 2)
-3. Move into Workstream 3: orchestrator + subagents
+1. Build the actual orchestrator (wires planner -> reviewer ->
+   release-manager -> MCP tools together into a runnable pipeline)
+2. Governance policy + role-to-tool access matrix, formalized from
+   `docs/orchestration-diagram.md`'s existing map (Workstream 4)
+3. CI/CD guardrails (Workstream 4)
+4. Right-size each workflow step + deterministic conversion + ADR (Workstream 5)
