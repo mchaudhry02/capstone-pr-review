@@ -1,0 +1,1 @@
+{"findings": [{"file": "src/locale/de/_lib/match/index.ts", "line_or_hunk": "10", "issue": "Missing pipe between j\u00e4nner and januar merges them into one broken string", "severity": "medium", "recommended_action": "request_changes"}], "overall_risk_score": "medium", "overall_recommendation": "request_changes"}
