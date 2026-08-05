@@ -32,11 +32,19 @@ Status of required artifacts as of completing Workstream 1.
 ## Module 4 (Governance, CI/CD, ADRs, conversion)
 | Artifact | Status |
 |---|---|
-| Governance policy | Not started — GAP |
-| Role-to-tool access matrix | Not started — GAP |
-| CI/CD guardrails | Not started — GAP |
-| Audit log template | Not started — GAP |
-| Deterministic conversion + ADR | Not started — GAP |
+| Governance policy | **Done** — `docs/governance-policy.md`: least-privilege principle, justification-to-widen process, data classification boundaries, escalation/rollback rules |
+| Role-to-tool access matrix | **Done** — table in `docs/governance-policy.md`, cross-referenced against `docs/orchestration-diagram.md` and both MCP servers' `TOOL_GRANTS` |
+| CI/CD guardrails | **Done** — `.github/workflows/policy-checks.yml`: 3 jobs (policy tests, eval checks, retrieval self-test) triggered on PRs touching agents/skills/MCP/governance docs |
+| Audit log template | **Done** — `docs/audit-log-template.md`, schema + worked example showing a denied tool call logged |
+| Deterministic conversion + ADR | Not started — GAP (this is Workstream 5's actual work) |
+
+## Governance Enforcement Evidence (not just documentation)
+
+`tests/test_policy.py` was run against the real `mcp/storage_server.py`
+and `mcp/retrieval_server.py` code — all 5 tests passed, including a
+functional check (not just a config comparison) that `release-manager`
+is genuinely denied a tool call it shouldn't have. This is real evidence
+of "enforced in code," per the rubric's governance requirement.
 
 ## Known Remaining Gap in Module 3
 
@@ -51,8 +59,12 @@ integration run.
 
 ## Immediate Next Actions (in priority order)
 1. Build the actual orchestrator (wires planner -> reviewer ->
-   release-manager -> MCP tools together into a runnable pipeline)
-2. Governance policy + role-to-tool access matrix, formalized from
-   `docs/orchestration-diagram.md`'s existing map (Workstream 4)
-3. CI/CD guardrails (Workstream 4)
-4. Right-size each workflow step + deterministic conversion + ADR (Workstream 5)
+   release-manager -> MCP tools together into a runnable pipeline) —
+   still blocking real (non-hand-crafted) eval and audit log evidence
+2. Right-size each workflow step: agent-vs-deterministic-vs-human
+   decision matrix, deterministic conversion with before/after evidence,
+   ADR (Workstream 5)
+3. Production-like integration + impact study against Module 1 baseline
+   (Workstream 6)
+4. Final portfolio packaging: architecture write-up, impact report,
+   stakeholder one-pager, runbook, walkthrough video (Workstream 7)

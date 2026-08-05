@@ -14,14 +14,20 @@ Given a PR diff, this pipeline:
 3. Flags high-risk changes (security issues, silently dropped exports,
    broken logic) for human escalation instead of auto-approving
 4. Drafts a release-note line for the change
-   See `docs/prd.md` for the full problem statement, stakeholder, and
-   acceptance criteria.
+
+See `docs/prd.md` for the full problem statement, stakeholder, and
+acceptance criteria.
 
 ## Status
 
-This is an active capstone project. Current status: Workstream 1
-(scoping, baseline, ground-truth data) is complete. See
-`docs/gap-inventory.md` for what's built vs. in progress.
+This is an active capstone project. Workstreams 1-4 are substantively
+complete: scoping and baseline (WS1), repo assembly with agents/skills/
+memory (WS2), orchestration + MCP + retrieval + evals (WS3), and
+governance policy + CI/CD guardrails (WS4) — including a policy test
+suite that runs against the real MCP server code, not just documentation.
+The one known gap: no orchestrator code yet wires the agents into a
+runnable end-to-end pipeline (see `docs/gap-inventory.md`'s "Known
+Remaining Gap"). See `docs/gap-inventory.md` for full status.
 
 ## Quick Start (fork-and-run in under 15 minutes)
 
@@ -29,6 +35,7 @@ This is an active capstone project. Current status: Workstream 1
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
 - [GitHub CLI](https://cli.github.com/) installed and authenticated (`gh auth login`)
 - An Anthropic API key (or your chosen agent runtime's equivalent)
+
 ### 1. Clone this repo
 ```bash
 git clone <this-repo-url>
@@ -37,12 +44,13 @@ cd capstone-pr-review
 
 ### 2. Set up your environment
 ```bash
-cp .env.example .env
+cp docker/.env.example docker/.env
 ```
-Open `.env` and fill in your actual API key. **Never commit this file.**
+Open `docker/.env` and fill in your actual API key. **Never commit this file.**
 
 ### 3. Build and start the containerized harness
 ```bash
+cd docker
 docker compose build
 docker compose up -d
 ```
@@ -72,6 +80,9 @@ docker compose down
 
 ```
 .
+├── .github/
+│   └── workflows/
+│       └── policy-checks.yml   # CI: policy tests, eval checks, retrieval self-test on relevant PRs
 ├── .idea/                    # JetBrains IDE settings (gitignored)
 ├── agents/
 │   ├── planner.md              # Routes PR to subagents, retrieves context, no review authority
@@ -96,7 +107,9 @@ docker compose down
 │   ├── iteration-log.md             # Chronological decision log
 │   ├── gap-inventory.md             # What's built vs. in progress
 │   ├── orchestration-diagram.md     # Mermaid flowchart + routing-and-tool-grant map
-│   └── retrieval-quality-report.md  # Real results from the MCP retrieval server
+│   ├── retrieval-quality-report.md  # Real results from the MCP retrieval server
+│   ├── governance-policy.md         # Role-to-tool matrix, data classification, enforcement points
+│   └── audit-log-template.md        # Schema + example for logging agent actions and policy denials
 ├── evals/
 │   ├── holdout-set.md           # Calibration vs. holdout PR split
 │   ├── evaluation-harness.md    # Deterministic checks + rubric scoring design
@@ -116,11 +129,18 @@ docker compose down
 ├── skills/
 │   ├── diff-parsing.md         # Shared diff-parsing logic used by planner + reviewer
 │   └── risk-scoring.md         # Deterministic severity/recommendation scoring, fixes baseline's Risk Flagging gap
+├── tests/
+│   └── test_policy.py          # Policy tests: checks TOOL_GRANTS matches governance-policy.md, verifies real denials work
 ├── workspace/                # Mounted working directory for the agent harness at runtime
 ├── .gitignore                 # Excludes secrets, IDE files, cloned repos (chalk/), node_modules, etc.
 ├── .mcp.json                  # MCP server registration (storage + retrieval)
 ├── fetch-prs.sh               # Pulls sample PR data from GitHub
 └── README.md
+```
+
+**Note:** `.idea/`, `chalk/`, `docker/.env`, and other local-only files are
+excluded via `.gitignore` — they exist on disk for local development but
+are never committed. See `.gitignore` at the repo root for the full list.
 
 ## Delivery Path
 
@@ -143,12 +163,46 @@ issue introduced, are documented in `data/seeded-bugs/ground-truth.md`:
   only a reviewing agent (or human) catches
 - **pr-4179**: A missing regex alternation pipe breaking German
   month-name matching
+
 ## Baseline (Pre-Agent) Results
 
 See `docs/baseline-metrics.md` for full results. Summary: manual review
 caught 3/3 seeded bugs, averaging 5 minutes and a 75% quality score per
 review, at an estimated $6.25 cost per review. The agentic pipeline's
 results will be compared against this baseline once built.
+
+## MCP Configuration & Retrieval Quality
+
+Two local, stdio-based MCP servers back this pipeline (see `.mcp.json`):
+
+- **`mcp/storage_server.py`** — persistent memory (review history,
+  calibration log), with schema-validated writes and role-based tool
+  grants enforced server-side. Calibration log changes require human
+  promotion from a proposals file, not direct agent writes.
+- **`mcp/retrieval_server.py`** — TF-IDF retrieval over indexed PR diffs,
+  with an explicit relevance floor so it returns an empty result rather
+  than fabricating a weak match.
+
+See `docs/retrieval-quality-report.md` for full results: **4/6 ground-truth
+retrieval queries hit**, with 1 confirmed miss (a conceptual query with no
+lexical match — the relevance floor correctly returned nothing rather
+than guessing) and 1 confirmed false positive (logged as a calibration
+proposal in `memory/store/calibration-proposals.jsonl`).
+
+## Governance & CI/CD
+
+Least-privilege access is enforced, not just documented — see
+`docs/governance-policy.md` for the full role-to-tool matrix, data
+classification rules, and escalation/rollback procedures.
+
+`tests/test_policy.py` programmatically checks that the actual
+`TOOL_GRANTS` in both MCP servers match the documented policy, and
+functionally verifies that an unauthorized tool call (e.g.
+`release-manager` attempting to write to memory) is really denied, not
+just theoretically disallowed. This runs in CI
+(`.github/workflows/policy-checks.yml`) on any PR touching agents,
+skills, MCP servers, or governance docs, blocking merges that introduce
+policy drift or eval regressions.
 
 ## License
 
