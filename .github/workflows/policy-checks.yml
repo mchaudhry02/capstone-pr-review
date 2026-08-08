@@ -54,6 +54,20 @@ jobs:
         # paths get replaced with live pipeline output captured per-run --
         # see evals/sample-runs/README.md for the current known limitation.
 
+  deterministic-conversion-check:
+    name: Deterministic risk-scoring self-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run risk-scoring self-test (all rule branches)
+        run: python3 skills/risk_scoring.py
+        # See docs/adr/ADR-001-deterministic-risk-scoring.md -- this is
+        # the deterministic conversion of skills/risk-scoring.md's rules.
+        # Fails the build if any of the 9 rule-branch cases regress.
+
   retrieval-selftest:
     name: Retrieval server self-test
     runs-on: ubuntu-latest
