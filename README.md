@@ -25,6 +25,9 @@ complete: scoping and baseline (WS1), repo assembly with agents/skills/
 memory (WS2), orchestration + MCP + retrieval + evals (WS3), and
 governance policy + CI/CD guardrails (WS4) — including a policy test
 suite that runs against the real MCP server code, not just documentation.
+Workstream 5's core deliverable is also done: the risk-scoring step has
+been converted from agent-invoked reasoning to deterministic code, with
+measured before/after evidence and a full ADR.
 The one known gap: no orchestrator code yet wires the agents into a
 runnable end-to-end pipeline (see `docs/gap-inventory.md`'s "Known
 Remaining Gap"). See `docs/gap-inventory.md` for full status.
@@ -109,7 +112,11 @@ docker compose down
 │   ├── orchestration-diagram.md     # Mermaid flowchart + routing-and-tool-grant map
 │   ├── retrieval-quality-report.md  # Real results from the MCP retrieval server
 │   ├── governance-policy.md         # Role-to-tool matrix, data classification, enforcement points
-│   └── audit-log-template.md        # Schema + example for logging agent actions and policy denials
+│   ├── audit-log-template.md        # Schema + example for logging agent actions and policy denials
+│   ├── decision-matrix.md           # Agent-vs-deterministic-vs-human classification per pipeline step
+│   ├── before-after-risk-scoring-conversion.md  # Measured latency/cost/predictability evidence
+│   └── adr/
+│       └── ADR-001-deterministic-risk-scoring.md  # Decision record for the risk-scoring conversion
 ├── evals/
 │   ├── holdout-set.md           # Calibration vs. holdout PR split
 │   ├── evaluation-harness.md    # Deterministic checks + rubric scoring design
@@ -128,7 +135,8 @@ docker compose down
 │       └── calibration-proposals.jsonl # Agent-proposed changes awaiting human promotion
 ├── skills/
 │   ├── diff-parsing.md         # Shared diff-parsing logic used by planner + reviewer
-│   └── risk-scoring.md         # Deterministic severity/recommendation scoring, fixes baseline's Risk Flagging gap
+│   ├── risk-scoring.md         # Original rule design (see risk_scoring.py for the deterministic implementation)
+│   └── risk_scoring.py         # Deterministic conversion of risk-scoring rules — see ADR-001
 ├── tests/
 │   └── test_policy.py          # Policy tests: checks TOOL_GRANTS matches governance-policy.md, verifies real denials work
 ├── workspace/                # Mounted working directory for the agent harness at runtime
@@ -203,6 +211,23 @@ just theoretically disallowed. This runs in CI
 (`.github/workflows/policy-checks.yml`) on any PR touching agents,
 skills, MCP servers, or governance docs, blocking merges that introduce
 policy drift or eval regressions.
+
+## Right-Sizing & Deterministic Conversion
+
+Not every pipeline step should be an LLM call — see
+`docs/decision-matrix.md` for the full agent-vs-deterministic-vs-human
+breakdown of every step in this pipeline.
+
+One step was actually converted: risk-scoring (mapping a reviewer's
+findings to an overall recommendation) moved from agent-invoked reasoning
+to deterministic code (`skills/risk_scoring.py`), since the mapping rules
+were already fully specified with no real ambiguity left. Measured
+result: **~0.001ms per call at $0 marginal cost**, fully deterministic
+(9/9 rule-branch test cases pass), versus an LLM API call for logic that
+never needed one. Full before/after evidence and reasoning (including 3
+rejected alternatives with cited evidence) in
+`docs/before-after-risk-scoring-conversion.md` and
+`docs/adr/ADR-001-deterministic-risk-scoring.md`.
 
 ## License
 
