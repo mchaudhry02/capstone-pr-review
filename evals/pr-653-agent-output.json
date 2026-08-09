@@ -1,5 +1,14 @@
 {
-    "findings": [],
+    "findings": [
+        {
+            "file": "source/vendor/supports-color/index.js",
+            "line_or_hunk": "138-141",
+            "issue": "New xterm-ghostty terminal detection check was added with no accompanying test case, unlike other terminal-type branches in this file which are covered by test/force-color.js style tests.",
+            "severity": "low",
+            "recommended_action": "approve"
+        }
+    ],
     "overall_risk_score": "low",
-    "overall_recommendation": "approve"
+    "overall_recommendation": "approve",
+    "reasoning": "Highest finding severity is 'low' (1 finding(s) total); mapped per skills/risk-scoring.md rules."
 }
