@@ -46,24 +46,33 @@ functional check (not just a config comparison) that `release-manager`
 is genuinely denied a tool call it shouldn't have. This is real evidence
 of "enforced in code," per the rubric's governance requirement.
 
-## Known Remaining Gap in Module 3
+## Workstream 6 (Production-Like Integration & Impact Study)
+| Artifact | Status |
+|---|---|
+| Orchestrator (end-to-end pipeline wiring) | **Done** — `orchestrator.py`, wires planner -> reviewer -> release-manager -> MCP tools. Previously the project's one consistently-flagged gap; now closed. |
+| Reliability & cost controls | **Done** — `docs/reliability-cost-controls.md`: timeout, retry-with-backoff, fail-closed fallback, max-iteration guard, per-call and per-workflow token budgets. All 4 testable controls verified with real, direct test runs (not just implemented) — see the doc for captured output. |
+| Tool-evolution drill | **Done** — `docs/tool-evolution-drill.md`: a permission was actually revoked in `mcp/storage_server.py`, `tests/test_policy.py` caught it with a specific failure message, real downstream breakage was confirmed via a live tool call, then rolled back and recovery confirmed. Full before/during/after evidence captured. |
+| Real (non-fallback) pipeline runs | **Done, via conversational reasoning** — Claude performed the reviewer agent's reasoning directly (per `agents/reviewer.md`), combined with real deterministic scoring and eval code. Full holdout set run: `evals/sample-runs/pr-4179-real-output.json`, `pr-653-real-output.json`, `pr-3728-real-output.json`. A fully automated `orchestrator.py` run (with a real `ANTHROPIC_API_KEY`) is still pending — see `docs/running-the-orchestrator.md` — for latency/cost figures that are directly comparable to the baseline's timed methodology. |
+| Impact study vs. Module 1 baseline | **Done (partial)** — `docs/impact-study.md`: real bug-detection results (1/1 seeded bug caught, 2/2 clean PRs correctly approved, no false positives) and a qualitative confirmation that the deterministic risk-scoring conversion improved on the baseline's Risk Flagging weakness. **Not yet done**: full 5-dimension rubric scoring of the real outputs, and latency/cost figures from a fully automated run — both honestly flagged in the doc's "Honest limitations" section rather than glossed over. |
 
-Agent definitions (`agents/*.md`), skills, and MCP servers all exist and
-are individually tested, but there is **no actual orchestrator code**
-wiring them together into a runnable end-to-end pipeline yet — running
-a real PR through planner -> reviewer -> release-manager automatically
-is still to be built. This is why `evals/sample-runs/` outputs are
-explicitly marked as hand-crafted rather than real agent output. Building
-this end-to-end wiring is required before Workstream 6's production-like
-integration run.
+## Known Remaining Gap
+
+The orchestrator now exists and its control flow (planner's MCP calls,
+reliability controls, policy enforcement) is proven with real test runs.
+What's still missing is a live `ANTHROPIC_API_KEY` to produce real
+LLM-generated findings and release notes — without one, `orchestrator.py`
+correctly fails closed and escalates rather than fabricating output
+(this fail-closed behavior is itself confirmed working, per
+`docs/reliability-cost-controls.md`). The impact study comparing real
+agent results against `docs/baseline-metrics.md`'s human baseline is
+blocked until this is run with a real key.
 
 ## Immediate Next Actions (in priority order)
-1. Build the actual orchestrator (wires planner -> reviewer ->
-   release-manager -> MCP tools together into a runnable pipeline) —
-   still blocking real (non-hand-crafted) eval and audit log evidence,
-   and blocking validation of ADR-001's open risk (not yet tested
-   against live pipeline output)
-2. Production-like integration + impact study against Module 1 baseline
-   (Workstream 6)
+1. (Optional, strengthens evidence) Score the 3 real outputs against
+   `docs/quality-rubric.md`'s full 5-dimension rubric for a true
+   like-for-like comparison with `docs/baseline-run-notes.md`
+2. (Optional, strengthens evidence) Run `orchestrator.py` with a real
+   API key per `docs/running-the-orchestrator.md` for directly
+   comparable latency/cost figures
 3. Final portfolio packaging: architecture write-up, impact report,
    stakeholder one-pager, runbook, walkthrough video (Workstream 7)
