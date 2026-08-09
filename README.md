@@ -20,17 +20,17 @@ acceptance criteria.
 
 ## Status
 
-This is an active capstone project. Workstreams 1-4 are substantively
+This is an active capstone project. Workstreams 1-5 are substantively
 complete: scoping and baseline (WS1), repo assembly with agents/skills/
-memory (WS2), orchestration + MCP + retrieval + evals (WS3), and
-governance policy + CI/CD guardrails (WS4) — including a policy test
-suite that runs against the real MCP server code, not just documentation.
-Workstream 5's core deliverable is also done: the risk-scoring step has
-been converted from agent-invoked reasoning to deterministic code, with
-measured before/after evidence and a full ADR.
-The one known gap: no orchestrator code yet wires the agents into a
-runnable end-to-end pipeline (see `docs/gap-inventory.md`'s "Known
-Remaining Gap"). See `docs/gap-inventory.md` for full status.
+memory (WS2), orchestration + MCP + retrieval + evals (WS3), governance
+policy + CI/CD guardrails (WS4), and a deterministic conversion with a
+full ADR (WS5). Workstream 6's orchestrator now exists
+(`orchestrator.py`) and its control flow — reliability controls, policy
+enforcement, real MCP calls — is proven with real, directly-run tests.
+The one remaining gap: full end-to-end runs with real LLM-generated
+findings require a live `ANTHROPIC_API_KEY`, which this environment
+doesn't have configured — see `docs/running-the-orchestrator.md` to run
+it for real. See `docs/gap-inventory.md` for full status.
 
 ## Quick Start (fork-and-run in under 15 minutes)
 
@@ -115,6 +115,9 @@ docker compose down
 │   ├── audit-log-template.md        # Schema + example for logging agent actions and policy denials
 │   ├── decision-matrix.md           # Agent-vs-deterministic-vs-human classification per pipeline step
 │   ├── before-after-risk-scoring-conversion.md  # Measured latency/cost/predictability evidence
+│   ├── reliability-cost-controls.md  # Timeout/retry/fallback/budget controls, each with real test evidence
+│   ├── tool-evolution-drill.md       # Real permission-revocation drill: before/during/after test output
+│   ├── running-the-orchestrator.md   # Step-by-step guide to running orchestrator.py with a real API key
 │   └── adr/
 │       └── ADR-001-deterministic-risk-scoring.md  # Decision record for the risk-scoring conversion
 ├── evals/
@@ -143,6 +146,7 @@ docker compose down
 ├── .gitignore                 # Excludes secrets, IDE files, cloned repos (chalk/), node_modules, etc.
 ├── .mcp.json                  # MCP server registration (storage + retrieval)
 ├── fetch-prs.sh               # Pulls sample PR data from GitHub
+├── orchestrator.py            # Wires planner -> reviewer -> release-manager -> MCP tools into a runnable pipeline
 └── README.md
 ```
 
@@ -228,6 +232,28 @@ never needed one. Full before/after evidence and reasoning (including 3
 rejected alternatives with cited evidence) in
 `docs/before-after-risk-scoring-conversion.md` and
 `docs/adr/ADR-001-deterministic-risk-scoring.md`.
+
+## Production-Like Integration & Reliability
+
+`orchestrator.py` wires planner -> reviewer -> release-manager -> MCP
+tools into a single runnable pipeline. Four reliability/cost controls
+(timeout, retry-with-backoff, fail-closed fallback, per-call and
+per-workflow token budgets) are implemented and each individually
+verified with a real, direct test run — see
+`docs/reliability-cost-controls.md`.
+
+A real tool-evolution drill was also run: a permission was deliberately
+revoked in `mcp/storage_server.py`, `tests/test_policy.py` caught the
+regression with a specific failure message, real downstream breakage was
+confirmed, then the change was rolled back and recovery confirmed. Full
+before/during/after evidence in `docs/tool-evolution-drill.md`.
+
+Running the pipeline against real PRs (with no API key present) confirms
+the fail-closed design works: the planner's real MCP retrieval call
+succeeds, then the pipeline correctly escalates to human rather than
+fabricating a review when the LLM step can't run. See
+`docs/running-the-orchestrator.md` for how to run this with a real key
+to get full end-to-end results.
 
 ## License
 
