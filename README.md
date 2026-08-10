@@ -20,17 +20,33 @@ acceptance criteria.
 
 ## Status
 
-This is an active capstone project. Workstreams 1-5 are substantively
+This is an active capstone project. Workstreams 1-6 are substantively
 complete: scoping and baseline (WS1), repo assembly with agents/skills/
 memory (WS2), orchestration + MCP + retrieval + evals (WS3), governance
-policy + CI/CD guardrails (WS4), and a deterministic conversion with a
-full ADR (WS5). Workstream 6's orchestrator now exists
-(`orchestrator.py`) and its control flow — reliability controls, policy
-enforcement, real MCP calls — is proven with real, directly-run tests.
-The one remaining gap: full end-to-end runs with real LLM-generated
-findings require a live `ANTHROPIC_API_KEY`, which this environment
-doesn't have configured — see `docs/running-the-orchestrator.md` to run
-it for real. See `docs/gap-inventory.md` for full status.
+policy + CI/CD guardrails (WS4), a deterministic conversion with a full
+ADR (WS5), and production-like integration with a real tool-evolution
+drill and a completed impact study against the Module 1 baseline (WS6).
+`orchestrator.py` is fully proven end-to-end with real, captured
+output: a real MCP retrieval call, correct routing, a real memory write,
+and a working `--overreach-demo` mode that catches a live governance
+violation (planner attempting to skip the mandatory reviewer step) and
+records it in the final output's `governance_flags` field. See
+`docs/gap-inventory.md` for full status, and `docs/impact-study.md`'s
+"Honest limitations" section for what's not yet a fully like-for-like
+comparison (rubric scoring, latency/cost via a fully automated run).
+
+**Note on LLM invocation:** this project's reviewer and release-manager
+reasoning steps run through Claude.ai directly rather than a billed
+Anthropic API key — `orchestrator.py` supports this natively: it runs
+all deterministic/MCP steps locally, prints a ready-to-paste prompt for
+each LLM step, and continues once you paste the response back (see
+`docs/running-reviewer-via-claude-ai.md`). A `--dry-run` mode using
+canned fixtures (`mcp/dry_run_fixtures.json`) is also available for fast,
+repeatable demo runs — including `--overreach-demo` for the governance
+enforcement walkthrough. The fully automated, API-key-based path remains
+available and tested for a real deployment (see
+`docs/reliability-cost-controls.md`), but is not required to run this
+project.
 
 ## Quick Start (fork-and-run in under 15 minutes)
 
@@ -118,6 +134,8 @@ docker compose down
 │   ├── reliability-cost-controls.md  # Timeout/retry/fallback/budget controls, each with real test evidence
 │   ├── tool-evolution-drill.md       # Real permission-revocation drill: before/during/after test output
 │   ├── running-the-orchestrator.md   # Step-by-step guide to running orchestrator.py with a real API key
+│   ├── running-reviewer-via-claude-ai.md  # This project's actual approach: manual reasoning via Claude.ai, no billed API key needed
+│   ├── impact-study.md               # Baseline vs. agentic pipeline: real holdout-set results
 │   └── adr/
 │       └── ADR-001-deterministic-risk-scoring.md  # Decision record for the risk-scoring conversion
 ├── evals/
@@ -248,12 +266,41 @@ regression with a specific failure message, real downstream breakage was
 confirmed, then the change was rolled back and recovery confirmed. Full
 before/during/after evidence in `docs/tool-evolution-drill.md`.
 
-Running the pipeline against real PRs (with no API key present) confirms
-the fail-closed design works: the planner's real MCP retrieval call
-succeeds, then the pipeline correctly escalates to human rather than
-fabricating a review when the LLM step can't run. See
-`docs/running-the-orchestrator.md` for how to run this with a real key
-to get full end-to-end results.
+`orchestrator.py` runs fully end-to-end without needing a billed API
+key: deterministic and MCP steps run locally for real, and LLM steps
+are either pasted into Claude.ai (live mode) or driven by canned
+fixtures (`--dry-run`) for fast, repeatable runs — see
+`docs/running-reviewer-via-claude-ai.md`. A real run against
+`pr-4179` shows a genuine MCP retrieval call (5 results of 279 indexed
+docs), correct routing through all three agents, and a real write to
+persistent memory. Running with `--overreach-demo` demonstrates
+governance enforcement live: a routing plan that omits the mandatory
+reviewer step is caught in real time, printed as a
+`GOVERNANCE VIOLATION DETECTED` block citing the specific rule
+violated, forcibly corrected, and recorded in the final output's
+`governance_flags` field — a permanent, structured record of the
+enforcement action, not just a transient log line.
+
+## Impact Study
+
+`docs/impact-study.md` compares the agentic pipeline against the
+Module 1 human baseline (`docs/baseline-metrics.md`). The full holdout
+set was run with genuine reviewer reasoning (Claude performing the
+review step directly, per `agents/reviewer.md`'s spec, combined with the
+real deterministic scoring and eval code):
+
+- **`pr-4179`** (seeded bug): correctly caught, with a grounded
+  explanation of the exact break — verified by `evals/run_eval.py`
+- **`pr-653`** and **`pr-3728`** (clean): both correctly approved, no
+  false positives
+- The deterministic risk-scoring conversion's intended fix — more
+  consistent severity/action framing than the baseline's Risk Flagging
+  weakness — held up in this run
+
+See `docs/impact-study.md`'s "Honest limitations" section for what
+isn't yet a fully like-for-like comparison (rubric scoring against all
+5 quality dimensions, and latency/cost figures from a fully automated
+`orchestrator.py` run rather than conversational reasoning).
 
 ## License
 
