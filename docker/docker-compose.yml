@@ -3,12 +3,12 @@ services:
     build: .
     container_name: pr-review-agent
     volumes:
-      # Only mount the data and workspace folders - NOT your home directory
-      - ./data:/workspace/data
-      - ./workspace:/workspace/output
+      # Mount the whole repo (one level up from docker/) so the container
+      # sees orchestrator.py, agents/, skills/, mcp/, data/, etc. live -
+      # edits on your host machine show up immediately, no rebuild needed.
+      - ..:/workspace
     environment:
       # Loaded from .env - never commit real secrets
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     # No open network by default beyond what the base image needs.
     # If you want to explicitly restrict egress further, that's usually
