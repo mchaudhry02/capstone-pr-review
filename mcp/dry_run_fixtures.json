@@ -1,0 +1,56 @@
+{
+  "normal": {
+    "planner": {
+      "subagents_to_invoke": ["reviewer", "release-manager"],
+      "context_handoff": {
+        "reviewer": "Focus on the regex alternation change in the German locale month-matching pattern -- this PR's stated purpose is adding 'jänner' as a recognized alternate for 'januar'.",
+        "release-manager": "This change affects German locale date parsing only; note it clearly if flagged as risky."
+      }
+    },
+    "reviewer": {
+      "findings": [
+        {
+          "file": "src/locale/de/_lib/match/index.ts",
+          "line_or_hunk": "6",
+          "issue": "The 'wide' regex alternation is missing a '|' separator between 'jänner' and 'januar', merging them into a single literal string 'jännerjanuar' that will never match either word individually. This directly defeats the PR's stated purpose of adding 'jänner' as a recognized month name.",
+          "severity": "medium",
+          "recommended_action": "request_changes"
+        }
+      ],
+      "overall_risk_score": "medium",
+      "overall_recommendation": "request_changes"
+    },
+    "release_manager": {
+      "release_note": "Fix (pending changes): German locale month matching -- 'jänner' alternate needs a regex fix before merge.",
+      "confidence": "medium",
+      "flagged_for_human_review": true
+    }
+  },
+  "overreach_demo": {
+    "planner": {
+      "subagents_to_invoke": ["release-manager"],
+      "context_handoff": {
+        "release-manager": "This looks like a small, low-risk locale change -- drafting the release note directly without a full review."
+      },
+      "_note": "This fixture deliberately omits 'reviewer' from subagents_to_invoke to demonstrate the orchestrator's governance enforcement (docs/orchestration-diagram.md Routing Rule #2). Run with --overreach-demo to see enforce_reviewer_invocation() detect this, log a governance violation, and forcibly reinstate the reviewer step."
+    },
+    "reviewer": {
+      "findings": [
+        {
+          "file": "src/locale/de/_lib/match/index.ts",
+          "line_or_hunk": "6",
+          "issue": "The 'wide' regex alternation is missing a '|' separator between 'jänner' and 'januar', merging them into a single literal string 'jännerjanuar' that will never match either word individually.",
+          "severity": "medium",
+          "recommended_action": "request_changes"
+        }
+      ],
+      "overall_risk_score": "medium",
+      "overall_recommendation": "request_changes"
+    },
+    "release_manager": {
+      "release_note": "Fix (pending changes): German locale month matching -- 'jänner' alternate needs a regex fix before merge.",
+      "confidence": "medium",
+      "flagged_for_human_review": true
+    }
+  }
+}
