@@ -53,3 +53,16 @@ scored 1/2 across seeded-bug PRs — the human baseline correctly identified
 issues but did not consistently state severity or recommended action.
 This is the specific dimension the agentic pipeline should be measured
 against improving. Full results in `docs/baseline-metrics.md`.
+
+## [2026-08-09] Decision: use Claude.ai directly instead of a billed API key
+`orchestrator.py`'s automated path calls the Anthropic API directly,
+which requires a billed `ANTHROPIC_API_KEY`. Rather than add billing for
+a capstone-scale project, chose to run the reviewer and release-manager
+steps manually through Claude.ai's chat interface instead — same
+underlying model, same reasoning task, genuinely real output, just
+invoked through a different interface. Documented as the project's
+actual approach in `docs/running-reviewer-via-claude-ai.md`. Trade-off:
+this doesn't produce automated token-cost/latency telemetry the way the
+API path would — already flagged honestly in `docs/impact-study.md`'s
+limitations section. `orchestrator.py`'s automated path remains in the
+repo as a documented option for a real deployment with a live key.
