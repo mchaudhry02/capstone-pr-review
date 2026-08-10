@@ -1,0 +1,40 @@
+{
+  "pr_id": "4179",
+  "changed_files": [
+    "src/locale/de/_lib/match/index.ts"
+  ],
+  "routing_plan": {
+    "subagents_to_invoke": [
+      "release-manager",
+      "reviewer"
+    ],
+    "context_handoff": {
+      "release-manager": "This looks like a small, low-risk locale change -- drafting the release note directly without a full review."
+    },
+    "_note": "This fixture deliberately omits 'reviewer' from subagents_to_invoke to demonstrate the orchestrator's governance enforcement (docs/orchestration-diagram.md Routing Rule #2). Run with --overreach-demo to see enforce_reviewer_invocation() detect this, log a governance violation, and forcibly reinstate the reviewer step.",
+    "_governance_flags": [
+      "planner attempted to skip reviewer -- forcibly reinstated by orchestrator"
+    ]
+  },
+  "review": {
+    "findings": [
+      {
+        "file": "src/locale/de/_lib/match/index.ts",
+        "line_or_hunk": "6",
+        "issue": "The 'wide' regex alternation is missing a '|' separator between 'j\u00e4nner' and 'januar', merging them into a single literal string 'j\u00e4nnerjanuar' that will never match either word individually.",
+        "severity": "medium",
+        "recommended_action": "request_changes"
+      }
+    ],
+    "overall_risk_score": "medium",
+    "overall_recommendation": "request_changes"
+  },
+  "release_note": {
+    "release_note": "Fix (pending changes): German locale month matching -- 'j\u00e4nner' alternate needs a regex fix before merge.",
+    "confidence": "medium",
+    "flagged_for_human_review": true
+  },
+  "governance_flags": [
+    "planner attempted to skip reviewer -- forcibly reinstated by orchestrator"
+  ]
+}
