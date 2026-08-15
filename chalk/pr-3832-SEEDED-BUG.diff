@@ -1,0 +1,143 @@
+diff --git a/src/constants/index.ts b/src/constants/index.ts
+index 1453cf9693..7a61e9b3e9 100644
+--- a/src/constants/index.ts
++++ b/src/constants/index.ts
+@@ -32,7 +32,7 @@ export const daysInWeek = 7;
+  *
+  * One years equals 365.2425 days according to the formula:
+  *
+- * > Leap year occures every 4 years, except for years that are divisable by 100 and not divisable by 400.
++ * > Leap year occurs every 4 years, except for years that are dividable by 100 and not dividable by 400.
+  * > 1 mean year = (365+1/4-1/100+1/400) days = 365.2425 days
+  */
+ export const daysInYear = 365.2425;
+diff --git a/src/constructFrom/index.ts b/src/constructFrom/index.ts
+index 03c2d22734..9649d1b7a0 100644
+--- a/src/constructFrom/index.ts
++++ b/src/constructFrom/index.ts
+@@ -25,7 +25,7 @@ import type { GenericDateConstructor } from "../types.js";
+  * // A function that clones a date preserving the original type
+  * function cloneDate<DateType extends Date>(date: DateType): DateType {
+  *   return constructFrom(
+- *     date, // Use contrustor from the given date
++ *     date, // Use constructor from the given date
+  *     date.getTime() // Use the date value to create a new date
+  *   );
+  * }
+diff --git a/src/differenceInBusinessDays/index.ts b/src/differenceInBusinessDays/index.ts
+index 3b46cbab60..5f6478870b 100644
+--- a/src/differenceInBusinessDays/index.ts
++++ b/src/differenceInBusinessDays/index.ts
+@@ -12,7 +12,7 @@ import { toDate } from "../toDate/index.js";
+  *
+  * @description
+  * Get the number of business day periods between the given dates.
+- * Business days being days that arent in the weekend.
++ * Business days being days that aren't in the weekend.
+  * Like `differenceInCalendarDays`, the function removes the times from
+  * the dates before calculating the difference.
+  *
+diff --git a/src/formatISO/index.ts b/src/formatISO/index.ts
+index 605bc39dd9..c848cac5d6 100644
+--- a/src/formatISO/index.ts
++++ b/src/formatISO/index.ts
+@@ -20,7 +20,7 @@ export interface FormatISOOptions extends ISOFormatOptions {}
+  * @param date - The original date
+  * @param options - An object with options.
+  *
+- * @returns The formatted date string (in loca.l time zone)
++ * @returns The formatted date string (in local time zone)
+  *
+  * @throws `date` must not be Invalid Date
+  *
+diff --git a/src/isMatch/index.ts b/src/isMatch/index.ts
+index 05ba163064..c472e1b915 100644
+--- a/src/isMatch/index.ts
++++ b/src/isMatch/index.ts
+@@ -251,7 +251,7 @@ export interface IsMatchOptions
+  * 6. `YY` and `YYYY` tokens represent week-numbering years but they are often confused with years.
+  *    You should enable `options.useAdditionalWeekYearTokens` to use them. See: https://github.com/date-fns/date-fns/blob/master/docs/unicodeTokens.md
+  *
+- * 7. `D` and `DD` tokens represent days of the year but they are ofthen confused with days of the month.
++ * 7. `D` and `DD` tokens represent days of the year but they are often confused with days of the month.
+  *    You should enable `options.useAdditionalDayOfYearTokens` to use them. See: https://github.com/date-fns/date-fns/blob/master/docs/unicodeTokens.md
+  *
+  * 8. `P+` tokens do not have a defined priority since they are merely aliases to other tokens based
+diff --git a/src/isValid/index.ts b/src/isValid/index.ts
+index 56d30adf78..3da52becc1 100644
+--- a/src/isValid/index.ts
++++ b/src/isValid/index.ts
+@@ -25,7 +25,7 @@ import { toDate } from "../toDate/index.js";
+  * //=> true
+  *
+  * @example
+- * // For the value, convertable into a date:
++ * // For the value, convertible into a date:
+  * const result = isValid(1393804800000)
+  * //=> true
+  *
+diff --git a/src/milliseconds/index.ts b/src/milliseconds/index.ts
+index 3fccbaaf42..7eee8df697 100644
+--- a/src/milliseconds/index.ts
++++ b/src/milliseconds/index.ts
+@@ -12,7 +12,7 @@ import type { Duration } from "../types.js";
+  *
+  * One years equals 365.2425 days according to the formula:
+  *
+- * > Leap year occures every 4 years, except for years that are divisable by 100 and not divisable by 400.
++ * > Leap year occurs every 4 years, except for years that are divisible by 100 and not divisible by 400.
+  * > 1 mean year = (365+1/4-1/100+1/400) days = 365.2425 days
+  *
+  * One month is a year divided by 12.
+diff --git a/src/millisecondsToSeconds/index.ts b/src/millisecondsToSeconds/index.ts
+index ed17546e2c..3722ff7230 100644
+--- a/src/millisecondsToSeconds/index.ts
++++ b/src/millisecondsToSeconds/index.ts
+@@ -13,7 +13,7 @@ import { millisecondsInSecond } from "../constants/index.js";
+  * @returns The number of milliseconds converted in seconds
+  *
+  * @example
+- * // Convert 1000 miliseconds to seconds:
++ * // Convert 1000 milliseconds to seconds:
+  * const result = millisecondsToSeconds(1000)
+  * //=> 1
+  *
+diff --git a/src/parse/index.ts b/src/parse/index.ts
+index 329c538c50..19ebf79ec1 100644
+--- a/src/parse/index.ts
++++ b/src/parse/index.ts
+@@ -290,7 +290,7 @@ const unescapedLatinCharacterRegExp = /[a-zA-Z]/;
+  * 6. `YY` and `YYYY` tokens represent week-numbering years but they are often confused with years.
+  *    You should enable `options.useAdditionalWeekYearTokens` to use them. See: https://github.com/date-fns/date-fns/blob/master/docs/unicodeTokens.md
+  *
+- * 7. `D` and `DD` tokens represent days of the year but they are ofthen confused with days of the month.
++ * 7. `D` and `DD` tokens represent days of the year but they are often confused with days of the month.
+  *    You should enable `options.useAdditionalDayOfYearTokens` to use them. See: https://github.com/date-fns/date-fns/blob/master/docs/unicodeTokens.md
+  *
+  * 8. `P+` tokens do not have a defined priority since they are merely aliases to other tokens based
+diff --git a/src/subBusinessDays/index.ts b/src/subBusinessDays/index.ts
+index 6c68d18cf4..4b597d2638 100644
+--- a/src/subBusinessDays/index.ts
++++ b/src/subBusinessDays/index.ts
+@@ -3,10 +3,10 @@ import { addBusinessDays } from "../addBusinessDays/index.js";
+ /**
+  * @name subBusinessDays
+  * @category Day Helpers
+- * @summary Substract the specified number of business days (mon - fri) to the given date.
++ * @summary Subtract the specified number of business days (mon - fri) to the given date.
+  *
+  * @description
+- * Substract the specified number of business days (mon - fri) to the given date, ignoring weekends.
++ * Subtract the specified number of business days (mon - fri) to the given date, ignoring weekends.
+  *
+  * @typeParam DateType - The `Date` type, the function operates on. Gets inferred from passed arguments. Allows to use extensions like [`UTCDate`](https://github.com/date-fns/utc).
+  *
+@@ -16,7 +16,7 @@ import { addBusinessDays } from "../addBusinessDays/index.js";
+  * @returns The new date with the business days subtracted
+  *
+  * @example
+- * // Substract 10 business days from 1 September 2014:
++ * // Subtract 10 business days from 1 September 2014:
+  * const result = subBusinessDays(new Date(2014, 8, 1), 10)
+  * //=> Mon Aug 18 2014 00:00:00 (skipped weekend days)
+  */
