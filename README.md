@@ -53,7 +53,6 @@ project.
 ### Prerequisites
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
 - [GitHub CLI](https://cli.github.com/) installed and authenticated (`gh auth login`)
-- An Anthropic API key (or your chosen agent runtime's equivalent)
 
 ### 1. Clone this repo
 ```bash
